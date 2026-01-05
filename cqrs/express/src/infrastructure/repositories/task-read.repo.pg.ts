@@ -18,4 +18,19 @@ export class PgTaskReadRepository {
 
     return result.rows[0] ?? null;
   }
+
+  async insert(task: {
+    id: string;
+    title: string;
+    status: string;
+    created_at: Date;
+  }) {
+    await this.pool.query(
+      `
+    INSERT INTO task_view (id, title, status, created_at)
+    VALUES ($1, $2, $3, $4)
+    `,
+      [task.id, task.title, task.status, task.created_at]
+    );
+  }
 }

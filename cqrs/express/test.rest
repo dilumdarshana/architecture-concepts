@@ -5,8 +5,8 @@ POST http://localhost:3000/api/commands/tasks
 Content-Type: application/json
 
 {
-  "title": "Another ne task"
+  "title": "Finish CQRS today"
 }
 
 ###
-GET http://localhost:3000/api/queries/tasks/6af07c1f-0223-489c-b127-1fc36d3c3a32
+GET http://localhost:3000/api/queries/tasks/659bf616-96fc-4d4b-8ab2-a53c8bf3dd4d

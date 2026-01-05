@@ -6,6 +6,9 @@ import { CreateTaskHandler } from './commands/create-task/create-task.handler';
 import { GetTaskHandler } from './queries/get-task/get-task.handler';
 import { taskCommandController } from './api/task.command.controller';
 import { taskQueryController } from './api/task.query.controller';
+import { EventBus } from "./events/event-bus";
+import { TaskCreatedProjection } from "./projections/task-created.projection";
+import { TaskCreatedEvent } from "./events/task-created.event";
 
 export function createApp() {
   const app = express();
@@ -15,6 +18,9 @@ export function createApp() {
 
   // Built-in middleware for parsing URL-encoded form data
   app.use(express.urlencoded({ extended: true }));
+
+  // Event Bus
+  const eventBus = new EventBus();
 
   // Write DB
   const writePool = new Pool({
@@ -31,8 +37,20 @@ export function createApp() {
   const taskReadRepo = new PgTaskReadRepository(readPool);
 
   // Handlers
-  const createTaskHandler = new CreateTaskHandler(taskWriteRepo);
+  const createTaskHandler = new CreateTaskHandler(
+    taskWriteRepo,
+    eventBus,
+  );
   const getTaskHandler = new GetTaskHandler(taskReadRepo);
+
+  // Projection
+  const taskCreatedProjection = new TaskCreatedProjection(taskReadRepo);
+
+  // Subscribe
+  eventBus.subscribe<TaskCreatedEvent>(
+    'TaskCreatedEvent',
+    (event) => taskCreatedProjection.handle(event)
+  );
 
   // Controllers
   app.use('/api/commands', taskCommandController(createTaskHandler));

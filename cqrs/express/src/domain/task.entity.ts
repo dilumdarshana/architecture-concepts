@@ -7,7 +7,8 @@ export class Task {
     public readonly id: string,
     public title: string,
     public status: TaskStatus,
-    public assigneeId?: string
+    public assigneeId?: string,
+    public created_at: Date = new Date(),
   ) { }
 
   static create(title: string): Task {
