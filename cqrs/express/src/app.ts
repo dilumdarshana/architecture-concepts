@@ -6,9 +6,9 @@ import { CreateTaskHandler } from './commands/create-task/create-task.handler';
 import { GetTaskHandler } from './queries/get-task/get-task.handler';
 import { taskCommandController } from './api/task.command.controller';
 import { taskQueryController } from './api/task.query.controller';
-import { EventBus } from "./events/event-bus";
-import { TaskCreatedProjection } from "./projections/task-created.projection";
-import { TaskCreatedEvent } from "./events/task-created.event";
+import { EventBus } from './events/event-bus';
+import { TaskCreatedProjection } from './projections/task-created.projection';
+import { TaskCreatedEvent } from './events/task-created.event';
 
 export function createApp() {
   const app = express();
