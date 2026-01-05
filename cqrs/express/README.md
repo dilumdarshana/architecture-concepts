@@ -49,8 +49,71 @@ This project is intended as a **learning reference** for building CQRS-based bac
 
 
 ## Query Flow
+```mermaid
+  sequenceDiagram
+    participant Client
+    participant Controller as Query Controller
+    participant Handler as GetTaskHandler
+    participant ReadRepo
+    participant ReadDB
 
+    Client->>Controller: GET /tasks/:id
+    Controller->>Handler: GetTaskQuery
+    Handler->>ReadRepo: findById(id)
+    ReadRepo->>ReadDB: SELECT task_view
+    ReadDB-->>ReadRepo: task
+    ReadRepo-->>Handler: task
+    Handler-->>Controller: task
+    Controller-->>Client: JSON response
+```
 
+## Flow Chart
+```mermaid
+  flowchart LR
+    Client[Client / API Consumer]
 
+    subgraph API Layer
+        CC[Task Command Controller]
+        QC[Task Query Controller]
+    end
+
+    subgraph Command Side
+        CH[CreateTaskHandler]
+        WR[Task Write Repository]
+        WDB[(Write DB\nPostgreSQL)]
+    end
+
+    subgraph Events
+        EB[Event Bus]
+        EVT[TaskCreatedEvent]
+    end
+
+    subgraph Projection
+        PRJ[TaskCreatedProjection]
+    end
+
+    subgraph Query Side
+        QRH[GetTaskHandler]
+        RR[Task Read Repository]
+        RDB[(Read DB\nPostgreSQL)]
+    end
+
+    %% Command flow
+    Client -->|POST /api/commands/tasks| CC
+    CC --> CH
+    CH --> WR
+    WR --> WDB
+    CH -->|publish| EB
+    EB --> EVT
+    EVT --> PRJ
+    PRJ --> RR
+    RR --> RDB
+
+    %% Query flow
+    Client -->|GET /api/queries/tasks/:id| QC
+    QC --> QRH
+    QRH --> RR
+    RR --> RDB
+  ```
 
 
