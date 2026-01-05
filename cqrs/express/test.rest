@@ -10,3 +10,11 @@ Content-Type: application/json
 
 ###
 GET http://localhost:3000/api/queries/tasks/659bf616-96fc-4d4b-8ab2-a53c8bf3dd4d
+
+###
+PATCH http://localhost:3000/api/commands/tasks/659bf616-96fc-4d4b-8ab2-a53c8bf3dd4d/status
+Content-Type: application/json
+
+{
+  "status": "IN_PROGRESS"
+}

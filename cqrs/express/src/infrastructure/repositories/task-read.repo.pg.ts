@@ -19,6 +19,17 @@ export class PgTaskReadRepository {
     return result.rows[0] ?? null;
   }
 
+  async updateStatus(taskId: string, status: string): Promise<void> {
+    await this.pool.query(
+      `
+      UPDATE task_view
+      SET status = $1
+      WHERE id = $2
+      `,
+      [status, taskId]
+    );
+  }
+
   async insert(task: {
     id: string;
     title: string;

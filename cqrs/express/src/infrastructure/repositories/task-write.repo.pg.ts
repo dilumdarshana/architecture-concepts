@@ -14,4 +14,18 @@ export class PgTaskWriteRepository implements TaskWriteRepository {
       [task.id, task.title, task.status, task.assigneeId ?? null]
     );
   }
+
+  async updateStatus(taskId: string, status: string): Promise<Task | null> {
+    const result = await this.pool.query(
+      `
+      UPDATE tasks
+      SET status = $1
+      WHERE id = $2
+      RETURNING *
+      `,
+      [status, taskId]
+    );
+
+    return result.rows[0] ?? null;
+  }
 }

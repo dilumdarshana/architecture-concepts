@@ -9,6 +9,9 @@ import { taskQueryController } from './api/task.query.controller';
 import { EventBus } from './events/event-bus';
 import { TaskCreatedProjection } from './projections/task-created.projection';
 import { TaskCreatedEvent } from './events/task-created.event';
+import { TaskStatusUpdatedEvent } from './events/task-status-updated.event';
+import { TaskStatusUpdatedProjection } from './projections/task-status-updated.projection';
+import { UpdateTaskStatusHandler } from './commands/update-task-status/update-task-status.handler';
 
 export function createApp() {
   const app = express();
@@ -42,18 +45,29 @@ export function createApp() {
     eventBus,
   );
   const getTaskHandler = new GetTaskHandler(taskReadRepo);
+  const updateTaskStatusHandler =
+    new UpdateTaskStatusHandler(taskWriteRepo, eventBus);
 
   // Projection
   const taskCreatedProjection = new TaskCreatedProjection(taskReadRepo);
+  const taskStatusUpdatedProjection =
+    new TaskStatusUpdatedProjection(taskReadRepo);
 
   // Subscribe
   eventBus.subscribe<TaskCreatedEvent>(
     'TaskCreatedEvent',
     (event) => taskCreatedProjection.handle(event)
   );
+  eventBus.subscribe<TaskStatusUpdatedEvent>(
+    'TaskStatusUpdatedEvent',
+    (event) => taskStatusUpdatedProjection.handle(event)
+  );
 
   // Controllers
-  app.use('/api/commands', taskCommandController(createTaskHandler));
+  app.use('/api/commands', taskCommandController(
+    createTaskHandler,
+    updateTaskStatusHandler,
+  ));
   app.use('/api/queries', taskQueryController(getTaskHandler));
 
   return app;
