@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { CreateTaskHandler } from '../commands/create-task/create-task.handler';
 import { CreateTaskCommand } from '../commands/create-task/create-task.command';
 
-export function createTaskController(
+export function taskCommandController(
   createTaskHandler: CreateTaskHandler
 ) {
   const router = Router();

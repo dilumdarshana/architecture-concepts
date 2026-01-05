@@ -1,9 +1,12 @@
 http://localhost:3000/health
 
 ###
-POST http://localhost:3000/api/tasks
+POST http://localhost:3000/api/commands/tasks
 Content-Type: application/json
 
 {
-  "title": "New Task from REST Test"
+  "title": "Another ne task"
 }
+
+###
+GET http://localhost:3000/api/queries/tasks/6af07c1f-0223-489c-b127-1fc36d3c3a32

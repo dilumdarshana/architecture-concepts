@@ -1,8 +1,11 @@
 import express from 'express';
 import { Pool } from 'pg';
 import { PgTaskWriteRepository } from './infrastructure/repositories/task-write.repo.pg';
+import { PgTaskReadRepository } from './infrastructure/repositories/task-read.repo.pg';
 import { CreateTaskHandler } from './commands/create-task/create-task.handler';
-import { createTaskController } from './api/task.controller';
+import { GetTaskHandler } from './queries/get-task/get-task.handler';
+import { taskCommandController } from './api/task.command.controller';
+import { taskQueryController } from './api/task.query.controller';
 
 export function createApp() {
   const app = express();
@@ -13,17 +16,27 @@ export function createApp() {
   // Built-in middleware for parsing URL-encoded form data
   app.use(express.urlencoded({ extended: true }));
 
-  const pool = new Pool({
+  // Write DB
+  const writePool = new Pool({
     connectionString: process.env.WRITE_DB_URL
   });
 
-  const taskWriteRepo = new PgTaskWriteRepository(pool);
-  const createTaskHandler = new CreateTaskHandler(taskWriteRepo);
+  // Read DB
+  const readPool = new Pool({
+    connectionString: process.env.READ_DB_URL
+  });
 
-  app.use(
-    '/api',
-    createTaskController(createTaskHandler)
-  );
+  // Repositories
+  const taskWriteRepo = new PgTaskWriteRepository(writePool);
+  const taskReadRepo = new PgTaskReadRepository(readPool);
+
+  // Handlers
+  const createTaskHandler = new CreateTaskHandler(taskWriteRepo);
+  const getTaskHandler = new GetTaskHandler(taskReadRepo);
+
+  // Controllers
+  app.use('/api/commands', taskCommandController(createTaskHandler));
+  app.use('/api/queries', taskQueryController(getTaskHandler));
 
   return app;
 }
