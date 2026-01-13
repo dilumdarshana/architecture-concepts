@@ -45,20 +45,43 @@ function main() {
   // });
 
   // Client streaming call
-  const stream = client.sumNumbers((error: any, response: any) => {
-    if (error) {
-      console.error('Error:', error);
-      return;
-    }
-    console.log('Sum:', response.sum);
+  // const stream = client.sumNumbers((error: any, response: any) => {
+  //   if (error) {
+  //     console.error('Error:', error);
+  //     return;
+  //   }
+  //   console.log('Sum:', response.sum);
+  // });
+
+  // [10, 20, 30, 40, 50].forEach((num) => {
+  //   stream.write({ number: num });
+  // });
+
+  // stream.end();
+  // console.log('Client stream ended.');
+
+  // Bidirectional streaming call
+  const chatStream = client.chat();
+
+  chatStream.on('data', (response: any) => {
+    console.log(`${response.user}: ${response.message}`);
   });
 
-  [10, 20, 30, 40, 50].forEach((num) => {
-    stream.write({ number: num });
+  chatStream.on('end', () => {
+    console.log('Chat ended.');
   });
 
-  stream.end();
-  console.log('Client stream ended.');
+  chatStream.on('error', (error: any) => {
+    console.error('Error:', error);
+  });
+
+  ['Hello', 'How are you?', 'Goodbye'].forEach((msg) => {
+    chatStream.write({ user: 'client', message: msg });
+  });
+
+  setTimeout(() => {
+    chatStream.end();
+  }, 3000);
 }
 
 main();

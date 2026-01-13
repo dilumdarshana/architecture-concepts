@@ -50,6 +50,19 @@ function sumNumbers(call: any, callback: any) {
   });
 }
 
+// Implement bidirectional stream RPC method
+function chat(call: any) {
+  call.on('data', (request: any) => {
+    console.log(`Received message from ${request.user}: ${request.message}`);
+    const reply = { user: 'server', message: `You said: ${request.message}` };
+    call.write(reply);
+  });
+
+  call.on('end', () => {
+    call.end();
+  });
+}
+
 // Create and start the server
 function startServer() {
   const server = new grpc.Server();
@@ -58,6 +71,7 @@ function startServer() {
     sayHello: sayHello,
     getNumbers: getNumbers,
     sumNumbers: sumNumbers,
+    chat: chat,
   });
 
   const address = '0.0.0.0:5050';

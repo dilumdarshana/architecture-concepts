@@ -6,6 +6,7 @@ service Greeter {
   rpc SayHello (HelloRequest) returns (HelloReply);
   rpc GetNumbers(NumberRequest) returns (stream NumberResponse);
   rpc SumNumbers(stream SumRequest) returns (SumResponse);
+  rpc Chat(stream ChatMessage) returns (stream ChatMessage);
 }
 
 message HelloRequest {
@@ -31,4 +32,9 @@ message SumRequest {
 
 message SumResponse {
   int32 sum = 1;
+}
+
+message ChatMessage {
+  string user = 1;
+  string message = 2;
 }

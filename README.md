@@ -5,6 +5,10 @@
 
 ---
 
+## Included
+- CQRS
+- gRPC
+
 ## Purpose
 
 This repository is designed to:
