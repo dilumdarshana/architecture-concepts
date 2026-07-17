@@ -80,7 +80,9 @@ Each architectural pattern maps to a specific problem area:
 | [Promise APIs](promise-apis.md) | Dashboard endpoint uses `Promise.all` for parallel user/order/recommendation queries; Notification Service uses `Promise.allSettled` for batch email dispatch |
 | [Distributed Transactions](distributed-transactions.md) | Explicitly avoided — Saga + Outbox + Idempotency provide eventual consistency without 2PC overhead |
 | [Delivery Semantics](delivery-semantics.md) | All services use at-least-once delivery via SQS/Bull; Payment Service upgrades to exactly-once via idempotency keys |
-| [Graceful Shutdown](graceful-shutdown.md) | Every service implements signal handlers to drain queues and close DB connections during rolling deployments |
+| [Graceful Shutdown](graceful-shutdown.md) | Every service implements signal handlers to drain queues, track in-flight requests, and close keep-alive sockets during rolling deployments |
+| [Error Handling (Express)](error-handling.md) | Every service uses asyncHandler wrapper and centralized error middleware for consistent error responses |
+| [Cancellation & Timeouts](cancellation-timeouts.md) | HTTP routes use AbortController to cancel DB queries on client disconnect; outbox publisher uses timeout to prevent hung pollers |
 
 ---
 

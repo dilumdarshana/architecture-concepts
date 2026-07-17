@@ -100,6 +100,70 @@ app.post('/payments', async (req, res) => {
 });
 ```
 
+### Exactly-Once Email Send with Send-Log
+
+Email providers (SendGrid, SES, etc.) typically do not provide idempotency guarantees — calling their send API twice with the same content sends two emails. To achieve exactly-once, persist the send request in a log table before calling the provider, then check the log on retry:
+
+```typescript
+import { PrismaClient } from '@prisma/client';
+import { SES } from 'aws-sdk';
+
+const prisma = new PrismaClient();
+const ses = new SES();
+
+async function sendEmail(
+  idempotencyKey: string,
+  to: string,
+  subject: string,
+  body: string
+) {
+  // Check the send log first
+  const logged = await prisma.emailLog.findUnique({
+    where: { idempotencyKey }
+  });
+
+  if (logged) {
+    // Already sent — return the existing message ID
+    return logged.messageId;
+  }
+
+  // No record — send the email
+  const result = await ses
+    .sendEmail({
+      Source: 'noreply@example.com',
+      Destination: { ToAddresses: [to] },
+      Message: { Subject: { Data: subject }, Body: { Text: { Data: body } } }
+    })
+    .promise();
+
+  // Record the send in the log (unique constraint on idempotencyKey)
+  await prisma.emailLog.create({
+    data: {
+      idempotencyKey,
+      to,
+      subject,
+      messageId: result.MessageId
+    }
+  });
+
+  return result.MessageId;
+}
+```
+
+The `email_log` table enforces idempotency at the database level:
+
+```sql
+CREATE TABLE email_log (
+  idempotency_key UUID PRIMARY KEY,
+  to_address      TEXT NOT NULL,
+  subject         TEXT NOT NULL,
+  message_id      TEXT NOT NULL,
+  sent_at         TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+```
+
+This pattern works for any non-idempotent external side effect — SMS, push notifications, webhook calls — by recording the intent and result in a log table before retrying.
+
 ---
 
 ## Architecture / Flow
@@ -198,8 +262,10 @@ CREATE INDEX idx_idempotency_keys_created_at
 ## Related Concepts
 
 - [Outbox Pattern](outbox-pattern.md) — uses idempotency in the publishing process to prevent duplicate event delivery
+- [Delivery Semantics](delivery-semantics.md) — idempotency upgrades at-least-once to exactly-once processing
 - [Distributed Systems](distributed-systems.md) — retry ambiguity is a core challenge in network-bound systems
 - [Database Concurrency Control](database-concurrency-control.md) — idempotency keys rely on transactional atomicity for safe deduplication
+- [Cancellation & Timeouts](cancellation-timeouts.md) — timeouts enforce retry boundaries; idempotency ensures safe retries within them
 - Retry Pattern
 - Circuit Breaker
 - Exactly-Once Delivery

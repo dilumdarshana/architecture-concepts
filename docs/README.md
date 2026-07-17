@@ -18,7 +18,9 @@ A collection of architectural patterns, technologies, and design concepts — ea
 | 8 | [Saga Pattern](saga-pattern.md) | Sequence of local transactions with compensating actions for multi-service workflows. |
 | 9 | [Delivery Semantics](delivery-semantics.md) | At-most-once, at-least-once, and exactly-once guarantees for message processing. |
 | 10 | [Graceful Shutdown](graceful-shutdown.md) | Handling SIGINT/SIGTERM to drain consumers, close connections, and exit cleanly. |
-| 11 | [Practical Project](practical-project.md) | Reference e-commerce architecture applying all patterns in a real distributed system. |
+| 11 | [Error Handling (Express)](error-handling.md) | Centralized async error middleware for consistent error responses. |
+| 12 | [Cancellation & Timeouts](cancellation-timeouts.md) | AbortController, AbortSignal, and timeout patterns for async operations. |
+| 13 | [Practical Project](practical-project.md) | Reference e-commerce architecture applying all patterns in a real distributed system. |
 
 ---
 

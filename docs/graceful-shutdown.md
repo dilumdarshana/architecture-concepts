@@ -123,6 +123,81 @@ async function shutdown(signal: string) {
 }
 ```
 
+### Tracking In-Flight Requests and Draining Keep-Alive Sockets
+
+`server.close()` stops accepting new connections but does **not** close existing keep-alive connections. Active requests on those keep-alive sockets must complete before the server can fully drain. Use a tracking set to know when all requests finish:
+
+```typescript
+import { createServer, Socket } from 'http';
+import express from 'express';
+
+const app = express();
+const server = createServer(app);
+
+const inFlight = new Set<Socket>();
+const idleSockets = new Set<Socket>();
+
+// Track every connection
+server.on('connection', (socket) => {
+  idleSockets.add(socket);
+
+  socket.on('close', () => {
+    idleSockets.delete(socket);
+    inFlight.delete(socket);
+  });
+});
+
+// Track in-flight requests
+app.use((req, res, next) => {
+  inFlight.add(req.socket);
+  res.on('finish', () => {
+    inFlight.delete(req.socket);
+    idleSockets.add(req.socket);
+  });
+  next();
+});
+
+async function shutdown() {
+  isShuttingDown = true;
+
+  // 1. Stop new connections and close idle keep-alive sockets
+  server.close(() => {
+    console.log('All connections closed');
+  });
+
+  // Node 19+ — close idle keep-alive sockets immediately
+  if (typeof server.closeIdleConnections === 'function') {
+    server.closeIdleConnections();
+  } else {
+    // Manual: destroy idle keep-alive sockets
+    for (const socket of idleSockets) {
+      socket.destroy();
+    }
+    idleSockets.clear();
+  }
+
+  // 2. Wait for in-flight requests with a timeout
+  const drainTimeout = setTimeout(() => {
+    console.warn('Forcing remaining connections to close');
+    for (const socket of inFlight) {
+      socket.destroy();
+    }
+  }, 10_000);
+
+  // Poll until all in-flight requests complete
+  while (inFlight.size > 0) {
+    await sleep(100);
+  }
+
+  clearTimeout(drainTimeout);
+  console.log('All in-flight requests completed');
+
+  // 3. Drain workers, close DB, etc.
+  await Promise.all([worker.close(true), prisma.$disconnect()]);
+  process.exit(0);
+}
+```
+
 ### Health Check Endpoint for Orchestrators
 
 Kubernetes uses readiness probes to know when to stop sending traffic. The server can reject new requests during shutdown:
@@ -167,11 +242,15 @@ Shutdown Sequence:
 │  1. OS sends SIGINT/SIGTERM              │
 │  2. Handler sets isShuttingDown = true   │
 │  3. Readiness probe returns 503          │
-│  4. server.close() — stops new requests  │
-│  5. worker.close(true) — drains active   │
-│  6. prisma.$disconnect() — closes pool   │
-│  7. redis.quit() — closes connection     │
-│  8. process.exit(0)                      │
+│  4. server.close() — stops new conns     │
+│  5. closeIdleConnections() — destroy     │
+│     idle keep-alive sockets              │
+│  6. Poll until inFlight Set is empty     │
+│     (with timeout + force destroy)       │
+│  7. worker.close(true) — drains active   │
+│  8. prisma.$disconnect() — closes pool   │
+│  9. redis.quit() — closes connection     │
+│ 10. process.exit(0)                      │
 └─────────────────────────────────────────┘
 ```
 
@@ -181,12 +260,14 @@ Shutdown Sequence:
 
 1. Process registers signal handlers for `SIGINT` and `SIGTERM`.
 2. Signal arrives — the handler sets a shutdown flag and begins draining.
-3. **HTTP server**: `server.close()` stops accepting new connections. Active requests complete normally (Express/Fastify wait for them).
-4. **BullMQ workers**: `worker.close(true)` signals the worker to stop pulling new jobs. If `true` (graceful), it waits for currently active jobs to finish before resolving.
-5. **Database pool**: `$disconnect()` on Prisma closes all connections in the pool after pending queries finish.
-6. **Redis/Message brokers**: `client.quit()` sends `QUIT`, waits for ongoing commands to finish, then closes.
-7. A forced timeout (slightly less than the orchestrator's `terminationGracePeriodSeconds`) ensures the process exits even if cleanup hangs.
-8. `process.exit(0)` with a clean exit code signals a successful shutdown.
+3. Readiness probe returns 503 — the orchestrator stops routing new traffic.
+4. **HTTP server**: `server.close()` stops accepting new connections. Keep-alive sockets that are idle are destroyed via `server.closeIdleConnections()` (Node 19+) or manually tracked and destroyed.
+5. In-flight requests are tracked via a `Set<Socket>`. The shutdown polls until the set is empty or a timeout fires, forcefully destroying remaining sockets.
+6. **BullMQ workers**: `worker.close(true)` signals the worker to stop pulling new jobs. If `true` (graceful), it waits for currently active jobs to finish before resolving.
+7. **Database pool**: `$disconnect()` on Prisma closes all connections in the pool after pending queries finish.
+8. **Redis/Message brokers**: `client.quit()` sends `QUIT`, waits for ongoing commands to finish, then closes.
+9. A forced timeout (slightly less than the orchestrator's `terminationGracePeriodSeconds`) ensures the process exits even if cleanup hangs.
+10. `process.exit(0)` with a clean exit code signals a successful shutdown.
 
 ---
 
@@ -231,6 +312,8 @@ Shutdown Sequence:
 
 - [Promise APIs](promise-apis.md) — `Promise.all` coordinates parallel cleanup; `Promise.race` enforces timeouts
 - [Delivery Semantics](delivery-semantics.md) — graceful shutdown prevents unacknowledged messages from being lost or delayed
+- [Cancellation & Timeouts](cancellation-timeouts.md) — abort in-flight work during shutdown instead of waiting
+- [Error Handling (Express)](error-handling.md) — errors during shutdown must not propagate to middleware
 - [Distributed Systems](distributed-systems.md) — coordinated shutdown across multiple services during deployments
 - Kubernetes Pod Lifecycle
 - OS Signals
