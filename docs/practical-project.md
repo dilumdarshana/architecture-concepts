@@ -83,6 +83,8 @@ Each architectural pattern maps to a specific problem area:
 | [Graceful Shutdown](graceful-shutdown.md) | Every service implements signal handlers to drain queues, track in-flight requests, and close keep-alive sockets during rolling deployments |
 | [Error Handling (Express)](error-handling.md) | Every service uses asyncHandler wrapper and centralized error middleware for consistent error responses |
 | [Cancellation & Timeouts](cancellation-timeouts.md) | HTTP routes use AbortController to cancel DB queries on client disconnect; outbox publisher uses timeout to prevent hung pollers |
+| [Event Loop](event-loop.md) | Every Node.js service runs on the event loop; understanding phases prevents blocking and starvation |
+| [Claim-Check Pattern](claim-check-pattern.md) | Inventory Service uses `SELECT ... FOR UPDATE SKIP LOCKED` on reservation rows to prevent concurrent overselling |
 
 ---
 

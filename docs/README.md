@@ -24,7 +24,9 @@ A collection of architectural patterns, technologies, and design concepts — ea
 | 14 | [CQRS](cqrs.md) | Separating read and write models for independent optimisation and scaling. |
 | 15 | [Distributed Lock](distributed-lock.md) | Mutual exclusion across services using Redis or database-based locks. |
 | 16 | [Distributed Tracing](distributed-tracing.md) | Tracking requests across service boundaries with OpenTelemetry. |
-| 17 | [Practical Project](practical-project.md) | Reference e-commerce architecture applying all patterns in a real distributed system. |
+| 17 | [Event Loop](event-loop.md) | Node.js event loop phases, microtask/macrotask ordering, and phase behaviour. |
+| 18 | [Claim-Check Pattern](claim-check-pattern.md) | Database row-level locking to claim messages for exactly-once consumer processing. |
+| 19 | [Practical Project](practical-project.md) | Reference e-commerce architecture applying all patterns in a real distributed system. |
 
 ---
 

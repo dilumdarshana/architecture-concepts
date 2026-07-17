@@ -174,7 +174,7 @@ Worker Thread Pool (parallel CPU)
 
 ## Related Concepts
 
-- Event Loop
+- [Event Loop](event-loop.md)
 - libuv
 - Worker Threads
 - Async / Await

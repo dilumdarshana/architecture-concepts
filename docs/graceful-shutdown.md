@@ -317,7 +317,7 @@ Shutdown Sequence:
 - [Distributed Systems](distributed-systems.md) — coordinated shutdown across multiple services during deployments
 - Kubernetes Pod Lifecycle
 - OS Signals
-- libuv Event Loop
+- [Event Loop](event-loop.md)
 
 ---
 
