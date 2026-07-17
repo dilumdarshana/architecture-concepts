@@ -39,6 +39,7 @@ A collection of architectural patterns, technologies, and design concepts — ea
 | [Rate Limiting](rate-limiting.md) | Token bucket, sliding window, and other algorithms to control request rates. |
 | [Bulkhead Pattern](bulkhead-pattern.md) | Isolating connection pools and queues to prevent cascading resource exhaustion. |
 | [Backpressure](backpressure.md) | Flow control that slows producers when consumers cannot keep up. |
+| [Handling Eventual Consistency](handling-eventual-consistency.md) | Strategies for accepting staleness — read-your-writes, idempotency, sagas, CRDTs, UI patterns. |
 
 ### Data & Concurrency
 

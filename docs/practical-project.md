@@ -92,6 +92,7 @@ Each architectural pattern maps to a specific problem area:
 | [Distributed Transactions](distributed-transactions.md) | Explicitly avoided — Saga + Outbox + Idempotency provide eventual consistency without 2PC overhead |
 | [Delivery Semantics](delivery-semantics.md) | All services use at-least-once delivery via SQS/Bull; Payment Service upgrades to exactly-once via idempotency keys |
 | [Graceful Shutdown](graceful-shutdown.md) | Every service implements signal handlers to drain queues, track in-flight requests, and close keep-alive sockets during rolling deployments |
+| [Handling Eventual Consistency](handling-eventual-consistency.md) | Dashboard uses polling for near-real-time data; Notification Service accepts staleness; Order Service applies read-your-writes for user-facing queries |
 | [Error Handling (Express)](error-handling.md) | Every service uses asyncHandler wrapper and centralized error middleware for consistent error responses |
 | [Cancellation & Timeouts](cancellation-timeouts.md) | HTTP routes use AbortController to cancel DB queries on client disconnect; outbox publisher uses timeout to prevent hung pollers |
 | [Event Loop](event-loop.md) | Every Node.js service runs on the event loop; understanding phases prevents blocking and starvation |
