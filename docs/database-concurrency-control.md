@@ -261,6 +261,38 @@ LOCK TABLE inventory IN EXCLUSIVE MODE;
 | **Transactions** | Any multi-step write that must be atomic — order creation, fund transfer, inventory + order write |
 | **Atomic Operations** | Simple counters, stock decrements, balance updates — anything expressible as a single `UPDATE` |
 | **Pessimistic Locking** | High-contention writes where conflict is expected — flash sale inventory, last-seat booking, ledger journal entries |
+
+### When to use SELECT FOR UPDATE
+
+`SELECT ... FOR UPDATE` is the SQL statement that acquires a pessimistic row-level lock. Use it when:
+
+- **Read-modify-write cycles** — you read a value, compute a new value based on it, and write back. Without `FOR UPDATE`, two concurrent transactions can read the same value and produce a lost update.
+- **Inventory reservation** — read current stock, check availability, then decrement. `FOR UPDATE` ensures no other transaction reads stale stock between your read and write.
+- **Financial ledgers** — read account balance, validate sufficient funds, then withdraw. The lock prevents concurrent withdrawals from seeing the same balance.
+- **Queue claiming** — select the next unprocessed message and mark it in progress. `FOR UPDATE SKIP LOCKED` skips rows already locked by other consumers (see [Claim-Check Pattern](claim-check-pattern.md)).
+- **Any read whose value must remain stable** until the transaction commits — for example, reading a configuration row before applying business rules that depend on that configuration.
+
+```typescript
+// Flash sale — reserve last item
+await prisma.$transaction(async (tx) => {
+  const item = await tx.$queryRawUnsafe<Array<{ stock: number }>>(
+    'SELECT stock FROM inventory WHERE id = $1 FOR UPDATE',
+    productId
+  );
+  if (item[0].stock < quantity) throw new Error('Out of stock');
+  await tx.inventory.update({
+    where: { id: productId },
+    data: { stock: { decrement: quantity } }
+  });
+});
+```
+
+**Do NOT use `SELECT FOR UPDATE` when:**
+
+- The operation can be expressed as a single atomic `UPDATE` statement (e.g. `UPDATE inventory SET stock = stock - 1 WHERE stock >= 1`)
+- Conflicts are rare — optimistic locking is simpler and has lower overhead
+- The transaction would hold the lock for a long time (network calls, user input) — locks should span milliseconds, not seconds
+- You only need to read data — read-only queries never need `FOR UPDATE`
 | **Optimistic Locking** | Low-contention writes with occasional conflicts — profile updates, CMS content edits, non-critical inventory |
 
 ---

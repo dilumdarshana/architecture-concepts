@@ -172,11 +172,54 @@ Worker Thread Pool (parallel CPU)
 
 ---
 
+## Worker Threads vs Child Processes
+
+Node.js provides two APIs for running code outside the main thread: `worker_threads` and `child_process`. They serve different purposes.
+
+| | Worker Threads (`worker_threads`) | Child Processes (`child_process`) |
+|---|-----------------------------------|------------------------------------|
+| **Memory** | Shares memory with the main process (via `SharedArrayBuffer`) | Separate memory space — no sharing |
+| **Communication** | Message passing (structured clone); fast, low overhead | Message passing (serialized via IPC); pipe/stdio available |
+| **Startup** | Lightweight — same V8 isolate, reuses loaded modules | Heavy — new V8 isolate, reloads all modules |
+| **Use case** | CPU-bound computation (hashing, image processing, JSON parsing) | Running a separate program (Python script, shell command, legacy binary) |
+| **Failure isolation** | Crash takes down the main process (same process) | Crash is isolated (separate process) |
+| **Parallelism** | True parallelism (separate threads on separate cores) | True parallelism (separate processes on separate cores) |
+| **API** | `new Worker('./worker.js')` | `spawn()`, `fork()`, `exec()`, `execFile()` |
+
+**When to use Worker Threads:**
+
+- CPU-bound computation within the same Node.js application — cryptography, image processing, template rendering, large JSON serialization/deserialization
+- You need shared memory for performance-sensitive data passing
+- You want low per-worker overhead and fast startup
+
+**When to use Child Processes:**
+
+- Running a non-Node.js program — Python, Ruby, shell scripts, ffmpeg
+- You need strong failure isolation — a crash in the child must not affect the parent
+- You need stdio pipe access — streaming data through stdin/stdout
+- Forking for cluster mode (`cluster` module uses `child_process.fork` internally)
+
+```typescript
+// Worker thread — CPU-bound computation
+import { Worker } from 'worker_threads';
+
+const hashWorker = new Worker('./hash-worker.js', { workerData: input });
+hashWorker.on('message', (result) => console.log(result));
+
+// Child process — running a shell command
+import { spawn } from 'child_process';
+const ffmpeg = spawn('ffmpeg', ['-i', 'input.mp4', 'output.gif']);
+ffmpeg.stdout.on('data', (data) => console.log(data.toString()));
+```
+
+---
+
 ## Related Concepts
 
 - [Event Loop](event-loop.md)
 - libuv
 - Worker Threads
+- Child Processes
 - Async / Await
 - Non-blocking I/O
 - [Distributed Systems](distributed-systems.md) — each service in a distributed system handles concurrent requests, and parallelism scales work across machines

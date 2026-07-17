@@ -33,6 +33,7 @@ A collection of architectural patterns, technologies, and design concepts — ea
 | [Circuit Breaker](circuit-breaker.md) | Detects failures and stops calling degraded services to prevent cascading failures. |
 | [Claim-Check Pattern](claim-check-pattern.md) | Database row-level locking to claim messages for exactly-once consumer processing. |
 | [Distributed Lock](distributed-lock.md) | Mutual exclusion across services using Redis or database-based locks. |
+| [Retry Pattern](retry-pattern.md) | Exponential backoff and jitter for resilient retries after transient failures. |
 
 ### Data & Concurrency
 

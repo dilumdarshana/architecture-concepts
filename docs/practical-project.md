@@ -73,6 +73,7 @@ Each architectural pattern maps to a specific problem area:
 | [Event Sourcing](event-sourcing.md) | Payment Service stores ledger as an append-only event stream |
 | [Circuit Breaker](circuit-breaker.md) | Order Service wraps downstream Payment API calls with opossum |
 | [Idempotency](idempotency.md) | Payment Service deduplicates charge requests on retry |
+| [Retry Pattern](retry-pattern.md) | BullMQ workers use exponential backoff + jitter for payment and notification jobs |
 | Message Queue | Async communication between services (Bull / Redis) |
 | API Gateway | Single entry point with routing, auth, rate limiting |
 | [Distributed Tracing](distributed-tracing.md) | OpenTelemetry traces every request across all services, correlated by trace ID |
