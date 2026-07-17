@@ -181,7 +181,7 @@ async function createOrderWithInventory() {
 - [Distributed Systems](distributed-systems.md) — distributed transactions are a coordination strategy for multi-service systems
 - [Database Concurrency Control](database-concurrency-control.md) — ACID, locking, and isolation levels at the single-node level
 - [Outbox Pattern](outbox-pattern.md) — alternative for event delivery that avoids distributed transactions
-- Saga Pattern — compensation-based alternative for long-running business workflows
+- [Saga Pattern](saga-pattern.md) — compensation-based alternative for long-running business workflows
 - [CAP Theorem](cap-theorem.md)
 - Two-Phase Commit (2PC)
 - Three-Phase Commit (3PC)
