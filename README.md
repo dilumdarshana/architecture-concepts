@@ -25,7 +25,7 @@ This repository is designed to:
 ## How to Use This Repository
 
 1. **Explore the documentation first**  
-   Check `docs/` to understand the concepts behind each pattern.
+   Check the [documentation index](docs/README.md) to understand the concepts behind each pattern.
 
 2. **Run examples**  
    Each pattern has its own folder under `examples/`.  
@@ -51,7 +51,7 @@ Current patterns in the repository:
 | Event Sourcing | `examples/event-sourcing/` | Planned |
 | Saga / Distributed Transactions | `examples/sagas/` | Planned |
 | Messaging (Kafka, RabbitMQ) | `examples/messaging/` | Planned |
-| Architecture Principles | `docs/architecture-principles.md` | Reference |
+| Architecture Concepts (full index) | [`docs/README.md`](docs/README.md) | 22 docs |
 
 > More patterns will be added over time, following the same **isolated, hands-on approach**.
 
