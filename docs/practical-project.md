@@ -70,13 +70,23 @@ Each architectural pattern maps to a specific problem area:
 | [Outbox Pattern](outbox-pattern.md) | Order Service publishes `OrderCreated`/`PaymentConfirmed` without dual-write risk |
 | [Saga Pattern](saga-pattern.md) | Checkout flow coordinates Order, Payment, and Inventory services (choreography style) |
 | [CQRS](cqrs.md) | Analytics Service maintains denormalised read models built from the event stream |
+| [Consensus Algorithms](consensus-algorithms.md) | etcd or Raft-based coordination for failover and config management |
+| [Consistency Models](consistency-models.md) | Order Service uses strong consistency for inventory; eventual consistency for notifications |
+| [Consistent Hashing](consistent-hashing.md) | Redis Cluster uses consistent hashing for cache key distribution |
 | [Event Sourcing](event-sourcing.md) | Payment Service stores ledger as an append-only event stream |
+| [Service Discovery](service-discovery.md) | Kubernetes DNS resolves service names to healthy pod IPs |
+| [Backpressure](backpressure.md) | Queue workers limit concurrency; streams use backpressure-aware piping |
+| [Bulkhead Pattern](bulkhead-pattern.md) | Each service has dedicated connection pools per downstream dependency |
 | [Circuit Breaker](circuit-breaker.md) | Order Service wraps downstream Payment API calls with opossum |
 | [Idempotency](idempotency.md) | Payment Service deduplicates charge requests on retry |
 | [Retry Pattern](retry-pattern.md) | BullMQ workers use exponential backoff + jitter for payment and notification jobs |
 | Message Queue | Async communication between services (Bull / Redis) |
 | API Gateway | Single entry point with routing, auth, rate limiting |
 | [Distributed Tracing](distributed-tracing.md) | OpenTelemetry traces every request across all services, correlated by trace ID |
+| [Leader Election](leader-election.md) | Singleton batch job coordinator (report generation, cache warming) |
+| [Replication](replication.md) | PostgreSQL streaming replication for database HA; read replicas for analytics queries |
+| [Sharding](sharding.md) | Order data sharded by customer_id for horizontal write scaling |
+| [Rate Limiting](rate-limiting.md) | API Gateway enforces per-client rate limits with token bucket |
 | [Database Concurrency Control](database-concurrency-control.md) | Inventory Service uses pessimistic locking during flash sales; all services use transactions for atomic writes |
 | [Promise APIs](promise-apis.md) | Dashboard endpoint uses `Promise.all` for parallel user/order/recommendation queries; Notification Service uses `Promise.allSettled` for batch email dispatch |
 | [Distributed Transactions](distributed-transactions.md) | Explicitly avoided — Saga + Outbox + Idempotency provide eventual consistency without 2PC overhead |

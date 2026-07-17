@@ -14,6 +14,8 @@ A collection of architectural patterns, technologies, and design concepts — ea
 | [CAP Theorem](cap-theorem.md) | Consistency, Availability, Partition Tolerance — the fundamental distributed systems trade-off. |
 | [Distributed Transactions](distributed-transactions.md) | Two-Phase Commit and coordination strategies for atomicity across services. |
 | [Delivery Semantics](delivery-semantics.md) | At-most-once, at-least-once, and exactly-once guarantees for message processing. |
+| [Consistency Models](consistency-models.md) | Strong, eventual, causal, and other consistency guarantees for distributed data stores. |
+| [Consensus Algorithms](consensus-algorithms.md) | Raft, Paxos, and how distributed nodes agree on a single value despite failures. |
 
 ### Event-Driven Architecture
 
@@ -34,12 +36,18 @@ A collection of architectural patterns, technologies, and design concepts — ea
 | [Claim-Check Pattern](claim-check-pattern.md) | Database row-level locking to claim messages for exactly-once consumer processing. |
 | [Distributed Lock](distributed-lock.md) | Mutual exclusion across services using Redis or database-based locks. |
 | [Retry Pattern](retry-pattern.md) | Exponential backoff and jitter for resilient retries after transient failures. |
+| [Rate Limiting](rate-limiting.md) | Token bucket, sliding window, and other algorithms to control request rates. |
+| [Bulkhead Pattern](bulkhead-pattern.md) | Isolating connection pools and queues to prevent cascading resource exhaustion. |
+| [Backpressure](backpressure.md) | Flow control that slows producers when consumers cannot keep up. |
 
 ### Data & Concurrency
 
 | Concept | Description |
 |---------|-------------|
 | [Database Concurrency Control](database-concurrency-control.md) | Transactions, atomic operations, optimistic and pessimistic locking for safe concurrent data access. |
+| [Consistent Hashing](consistent-hashing.md) | Ring-based hashing that minimises key remapping when nodes join or leave. |
+| [Replication](replication.md) | Single-leader, multi-leader, and synchronous/asynchronous replication strategies. |
+| [Sharding](sharding.md) | Horizontal partitioning of data across independent databases for scale. |
 
 ### Node.js / JavaScript
 
@@ -57,6 +65,8 @@ A collection of architectural patterns, technologies, and design concepts — ea
 |---------|-------------|
 | [Graceful Shutdown](graceful-shutdown.md) | Handling SIGINT/SIGTERM to drain consumers, close connections, and exit cleanly. |
 | [Distributed Tracing](distributed-tracing.md) | Tracking requests across service boundaries with OpenTelemetry. |
+| [Service Discovery](service-discovery.md) | How services find each other dynamically via registries and DNS. |
+| [Leader Election](leader-election.md) | Selecting one node as coordinator using leases or consensus. |
 
 ### Reference Architecture
 
