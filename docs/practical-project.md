@@ -79,6 +79,8 @@ Each architectural pattern maps to a specific problem area:
 | [Database Concurrency Control](database-concurrency-control.md) | Inventory Service uses pessimistic locking during flash sales; all services use transactions for atomic writes |
 | [Promise APIs](promise-apis.md) | Dashboard endpoint uses `Promise.all` for parallel user/order/recommendation queries; Notification Service uses `Promise.allSettled` for batch email dispatch |
 | [Distributed Transactions](distributed-transactions.md) | Explicitly avoided — Saga + Outbox + Idempotency provide eventual consistency without 2PC overhead |
+| [Delivery Semantics](delivery-semantics.md) | All services use at-least-once delivery via SQS/Bull; Payment Service upgrades to exactly-once via idempotency keys |
+| [Graceful Shutdown](graceful-shutdown.md) | Every service implements signal handlers to drain queues and close DB connections during rolling deployments |
 
 ---
 
