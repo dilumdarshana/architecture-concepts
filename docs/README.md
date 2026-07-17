@@ -48,6 +48,7 @@ A collection of architectural patterns, technologies, and design concepts — ea
 | [Consistent Hashing](consistent-hashing.md) | Ring-based hashing that minimises key remapping when nodes join or leave. |
 | [Replication](replication.md) | Single-leader, multi-leader, and synchronous/asynchronous replication strategies. |
 | [Sharding](sharding.md) | Horizontal partitioning of data across independent databases for scale. |
+| [MySQL Scaling](mysql-scaling.md) | Progression from single instance to millions of users — replicas, caching, connection pooling, sharding. |
 
 ### Node.js / JavaScript
 
