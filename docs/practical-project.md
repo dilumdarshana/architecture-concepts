@@ -68,7 +68,7 @@ Each architectural pattern maps to a specific problem area:
 | Pattern | Applied In |
 |---------|------------|
 | [Outbox Pattern](outbox-pattern.md) | Order Service publishes `OrderCreated`/`PaymentConfirmed` without dual-write risk |
-| Saga Pattern | Checkout flow coordinates Order, Payment, and Inventory services |
+| [Saga Pattern](saga-pattern.md) | Checkout flow coordinates Order, Payment, and Inventory services (choreography style) |
 | CQRS | Analytics Service maintains denormalized read models from events |
 | Event Sourcing | Payment Service stores ledger as an append-only event stream |
 | Circuit Breaker | Order Service wraps downstream Payment API calls |
@@ -77,12 +77,14 @@ Each architectural pattern maps to a specific problem area:
 | API Gateway | Single entry point with routing, auth, rate limiting |
 | Distributed Tracing | OpenTelemetry traces requests across all services |
 | [Database Concurrency Control](database-concurrency-control.md) | Inventory Service uses pessimistic locking during flash sales; all services use transactions for atomic writes |
+| [Promise APIs](promise-apis.md) | Dashboard endpoint uses `Promise.all` for parallel user/order/recommendation queries; Notification Service uses `Promise.allSettled` for batch email dispatch |
+| [Distributed Transactions](distributed-transactions.md) | Explicitly avoided — Saga + Outbox + Idempotency provide eventual consistency without 2PC overhead |
 
 ---
 
 ## Flow: Place Order (Saga)
 
-The checkout flow uses the Saga Pattern to coordinate a distributed transaction across three services.
+The checkout flow uses the [Saga Pattern](saga-pattern.md) (choreography style) to coordinate a distributed transaction across three services.
 
 ### Step-by-Step
 
