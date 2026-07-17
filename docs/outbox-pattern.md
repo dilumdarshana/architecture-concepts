@@ -182,7 +182,7 @@ Two common publisher implementations:
 - CDC (Change Data Capture)
 - Event-Driven Architecture
 - Saga Pattern
-- CQRS
+- [CQRS](cqrs.md)
 - Message Queue
 - Idempotency
 - Event Sourcing

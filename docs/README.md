@@ -20,7 +20,11 @@ A collection of architectural patterns, technologies, and design concepts — ea
 | 10 | [Graceful Shutdown](graceful-shutdown.md) | Handling SIGINT/SIGTERM to drain consumers, close connections, and exit cleanly. |
 | 11 | [Error Handling (Express)](error-handling.md) | Centralized async error middleware for consistent error responses. |
 | 12 | [Cancellation & Timeouts](cancellation-timeouts.md) | AbortController, AbortSignal, and timeout patterns for async operations. |
-| 13 | [Practical Project](practical-project.md) | Reference e-commerce architecture applying all patterns in a real distributed system. |
+| 13 | [Circuit Breaker](circuit-breaker.md) | Detects failures and stops calling degraded services to prevent cascading failures. |
+| 14 | [CQRS](cqrs.md) | Separating read and write models for independent optimisation and scaling. |
+| 15 | [Distributed Lock](distributed-lock.md) | Mutual exclusion across services using Redis or database-based locks. |
+| 16 | [Distributed Tracing](distributed-tracing.md) | Tracking requests across service boundaries with OpenTelemetry. |
+| 17 | [Practical Project](practical-project.md) | Reference e-commerce architecture applying all patterns in a real distributed system. |
 
 ---
 

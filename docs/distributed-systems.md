@@ -201,10 +201,10 @@ Start with a monolith unless there is a clear need for distribution.
 - Event-Driven Architecture
 - [Outbox Pattern](outbox-pattern.md)
 - Saga Pattern
-- CQRS
+- [CQRS](cqrs.md)
 - CAP Theorem
 - Eventual Consistency
-- Distributed Locks
+- [Distributed Lock](distributed-lock.md)
 - Idempotency
 
 ### Common Patterns
@@ -213,11 +213,11 @@ Start with a monolith unless there is a clear need for distribution.
 - Message Queue
 - [Outbox Pattern](outbox-pattern.md)
 - Saga Pattern
-- CQRS
+- [CQRS](cqrs.md)
 - Event Sourcing
-- Circuit Breaker
+- [Circuit Breaker](circuit-breaker.md)
 - Retry Pattern
-- Distributed Lock
+- [Distributed Lock](distributed-lock.md)
 
 ### Common Technologies
 

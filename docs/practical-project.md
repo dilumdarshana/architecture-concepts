@@ -69,13 +69,13 @@ Each architectural pattern maps to a specific problem area:
 |---------|------------|
 | [Outbox Pattern](outbox-pattern.md) | Order Service publishes `OrderCreated`/`PaymentConfirmed` without dual-write risk |
 | [Saga Pattern](saga-pattern.md) | Checkout flow coordinates Order, Payment, and Inventory services (choreography style) |
-| CQRS | Analytics Service maintains denormalized read models from events |
+| [CQRS](cqrs.md) | Analytics Service maintains denormalised read models built from the event stream |
 | Event Sourcing | Payment Service stores ledger as an append-only event stream |
-| Circuit Breaker | Order Service wraps downstream Payment API calls |
+| [Circuit Breaker](circuit-breaker.md) | Order Service wraps downstream Payment API calls with opossum |
 | [Idempotency](idempotency.md) | Payment Service deduplicates charge requests on retry |
 | Message Queue | Async communication between services (Bull / Redis) |
 | API Gateway | Single entry point with routing, auth, rate limiting |
-| Distributed Tracing | OpenTelemetry traces requests across all services |
+| [Distributed Tracing](distributed-tracing.md) | OpenTelemetry traces every request across all services, correlated by trace ID |
 | [Database Concurrency Control](database-concurrency-control.md) | Inventory Service uses pessimistic locking during flash sales; all services use transactions for atomic writes |
 | [Promise APIs](promise-apis.md) | Dashboard endpoint uses `Promise.all` for parallel user/order/recommendation queries; Notification Service uses `Promise.allSettled` for batch email dispatch |
 | [Distributed Transactions](distributed-transactions.md) | Explicitly avoided — Saga + Outbox + Idempotency provide eventual consistency without 2PC overhead |
@@ -170,7 +170,7 @@ const worker = new Worker('notifications', async (job) => {
 
 ## Flow: Read Models (CQRS)
 
-Analytics Service maintains denormalized read models optimized for queries, decoupled from the transactional write side.
+The [CQRS](cqrs.md) pattern separates read and write responsibilities. Analytics Service maintains denormalised read models optimised for queries, decoupled from the transactional write side of the Order and Payment services.
 
 ```typescript
 import { PrismaClient } from '@prisma/client';
@@ -203,7 +203,7 @@ async function onPaymentConfirmed(event: PaymentConfirmedEvent) {
 
 ### Circuit Breaker
 
-Order Service wraps calls to Payment Service to fail fast when it is degraded:
+Order Service uses a [Circuit Breaker](circuit-breaker.md) to wrap calls to Payment Service, failing fast when it is degraded:
 
 ```typescript
 import CircuitBreaker from 'opossum';
