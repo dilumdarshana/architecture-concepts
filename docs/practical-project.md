@@ -27,6 +27,11 @@ Moving to a distributed system introduces new challenges: the [dual-write proble
 
 ## System Architecture
 
+Each service runs on Node.js, which uses [Concurrency vs Parallelism](concurrency-vs-parallelism.md) to handle many requests efficiently:
+
+- **Concurrency** — the event loop manages thousands of simultaneous I/O operations (DB queries, HTTP calls) per service without threading overhead.
+- **Parallelism** — CPU-bound work (image resizing for product photos, PDF invoice generation) is offloaded to worker threads so the event loop stays responsive.
+
 ```text
                            Client
                               │
@@ -67,10 +72,11 @@ Each architectural pattern maps to a specific problem area:
 | CQRS | Analytics Service maintains denormalized read models from events |
 | Event Sourcing | Payment Service stores ledger as an append-only event stream |
 | Circuit Breaker | Order Service wraps downstream Payment API calls |
-| Idempotency | Payment Service deduplicates charge requests on retry |
+| [Idempotency](idempotency.md) | Payment Service deduplicates charge requests on retry |
 | Message Queue | Async communication between services (Bull / Redis) |
 | API Gateway | Single entry point with routing, auth, rate limiting |
 | Distributed Tracing | OpenTelemetry traces requests across all services |
+| [Database Concurrency Control](database-concurrency-control.md) | Inventory Service uses pessimistic locking during flash sales; all services use transactions for atomic writes |
 
 ---
 
@@ -218,7 +224,7 @@ async function processPayment(orderId: string) {
 
 ### Idempotency
 
-Payment Service uses an idempotency key to safely handle retries:
+Payment Service uses an [Idempotency](idempotency.md) key to safely handle retries:
 
 ```typescript
 async function chargeCustomer(

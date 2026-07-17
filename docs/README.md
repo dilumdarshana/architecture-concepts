@@ -10,7 +10,10 @@ A collection of architectural patterns, technologies, and design concepts — ea
 |---|---------|-------------|
 | 1 | [Distributed Systems](distributed-systems.md) | Collection of independent services collaborating over a network to function as a single system. |
 | 2 | [Outbox Pattern](outbox-pattern.md) | Ensures reliable event delivery by writing events to a DB table within the same transaction as business data. |
-| 3 | [Practical Project](practical-project.md) | Reference e-commerce architecture applying all patterns in a real distributed system. |
+| 3 | [Concurrency vs Parallelism](concurrency-vs-parallelism.md) | Distinguishes dealing with many tasks from executing them simultaneously in Node.js. |
+| 4 | [Database Concurrency Control](database-concurrency-control.md) | Transactions, atomic operations, optimistic and pessimistic locking for safe concurrent data access. |
+| 5 | [Idempotency](idempotency.md) | Safe retries via idempotency keys to prevent duplicate side effects. |
+| 6 | [Practical Project](practical-project.md) | Reference e-commerce architecture applying all patterns in a real distributed system. |
 
 ---
 
