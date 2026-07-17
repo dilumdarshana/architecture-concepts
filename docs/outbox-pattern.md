@@ -185,7 +185,7 @@ Two common publisher implementations:
 - [CQRS](cqrs.md)
 - Message Queue
 - Idempotency
-- Event Sourcing
+- [Event Sourcing](event-sourcing.md)
 - [Distributed Systems](distributed-systems.md)
 
 ---

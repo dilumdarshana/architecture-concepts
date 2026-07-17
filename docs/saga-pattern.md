@@ -236,7 +236,7 @@ Order Service          Inventory Service       Payment Service
 - [Promise APIs](promise-apis.md) — orchestration can use `Promise.allSettled` to collect step outcomes
 - Choreography vs Orchestration
 - Compensating Transaction
-- Event-Driven Architecture
+- [Event-Driven Architecture](event-driven-architecture.md)
 
 ---
 

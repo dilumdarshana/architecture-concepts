@@ -198,11 +198,11 @@ Start with a monolith unless there is a clear need for distribution.
 
 - Microservices
 - Message Queues
-- Event-Driven Architecture
+- [Event-Driven Architecture](event-driven-architecture.md)
 - [Outbox Pattern](outbox-pattern.md)
 - Saga Pattern
 - [CQRS](cqrs.md)
-- CAP Theorem
+- [CAP Theorem](cap-theorem.md)
 - Eventual Consistency
 - [Distributed Lock](distributed-lock.md)
 - Idempotency
@@ -214,7 +214,7 @@ Start with a monolith unless there is a clear need for distribution.
 - [Outbox Pattern](outbox-pattern.md)
 - Saga Pattern
 - [CQRS](cqrs.md)
-- Event Sourcing
+- [Event Sourcing](event-sourcing.md)
 - [Circuit Breaker](circuit-breaker.md)
 - Retry Pattern
 - [Distributed Lock](distributed-lock.md)

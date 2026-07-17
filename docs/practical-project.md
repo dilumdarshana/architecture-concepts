@@ -70,7 +70,7 @@ Each architectural pattern maps to a specific problem area:
 | [Outbox Pattern](outbox-pattern.md) | Order Service publishes `OrderCreated`/`PaymentConfirmed` without dual-write risk |
 | [Saga Pattern](saga-pattern.md) | Checkout flow coordinates Order, Payment, and Inventory services (choreography style) |
 | [CQRS](cqrs.md) | Analytics Service maintains denormalised read models built from the event stream |
-| Event Sourcing | Payment Service stores ledger as an append-only event stream |
+| [Event Sourcing](event-sourcing.md) | Payment Service stores ledger as an append-only event stream |
 | [Circuit Breaker](circuit-breaker.md) | Order Service wraps downstream Payment API calls with opossum |
 | [Idempotency](idempotency.md) | Payment Service deduplicates charge requests on retry |
 | Message Queue | Async communication between services (Bull / Redis) |

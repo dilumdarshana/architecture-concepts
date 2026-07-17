@@ -26,7 +26,10 @@ A collection of architectural patterns, technologies, and design concepts — ea
 | 16 | [Distributed Tracing](distributed-tracing.md) | Tracking requests across service boundaries with OpenTelemetry. |
 | 17 | [Event Loop](event-loop.md) | Node.js event loop phases, microtask/macrotask ordering, and phase behaviour. |
 | 18 | [Claim-Check Pattern](claim-check-pattern.md) | Database row-level locking to claim messages for exactly-once consumer processing. |
-| 19 | [Practical Project](practical-project.md) | Reference e-commerce architecture applying all patterns in a real distributed system. |
+| 19 | [CAP Theorem](cap-theorem.md) | Consistency, Availability, Partition Tolerance — the fundamental distributed systems trade-off. |
+| 20 | [Event Sourcing](event-sourcing.md) | Append-only event store as source of truth with replayable projections. |
+| 21 | [Event-Driven Architecture](event-driven-architecture.md) | Loose coupling through event production and consumption across services. |
+| 22 | [Practical Project](practical-project.md) | Reference e-commerce architecture applying all patterns in a real distributed system. |
 
 ---
 

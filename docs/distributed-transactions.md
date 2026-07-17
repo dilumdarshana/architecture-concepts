@@ -182,7 +182,7 @@ async function createOrderWithInventory() {
 - [Database Concurrency Control](database-concurrency-control.md) — ACID, locking, and isolation levels at the single-node level
 - [Outbox Pattern](outbox-pattern.md) — alternative for event delivery that avoids distributed transactions
 - Saga Pattern — compensation-based alternative for long-running business workflows
-- CAP Theorem
+- [CAP Theorem](cap-theorem.md)
 - Two-Phase Commit (2PC)
 - Three-Phase Commit (3PC)
 - XA Standard
