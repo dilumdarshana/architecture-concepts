@@ -186,6 +186,7 @@ Two common publisher implementations:
 - Message Queue
 - Idempotency
 - Event Sourcing
+- [Distributed Systems](distributed-systems.md)
 
 ---
 

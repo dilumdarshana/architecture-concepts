@@ -10,6 +10,7 @@ A collection of architectural patterns, technologies, and design concepts — ea
 |---|---------|-------------|
 | 1 | [Distributed Systems](distributed-systems.md) | Collection of independent services collaborating over a network to function as a single system. |
 | 2 | [Outbox Pattern](outbox-pattern.md) | Ensures reliable event delivery by writing events to a DB table within the same transaction as business data. |
+| 3 | [Practical Project](practical-project.md) | Reference e-commerce architecture applying all patterns in a real distributed system. |
 
 ---
 

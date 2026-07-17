@@ -40,6 +40,27 @@ Every new file **must** be added to the table in [`README.md`](README.md).
 
 ---
 
+## Practical Project
+
+[`practical-project.md`](practical-project.md) is a capstone document that ties all concepts together. When adding or updating any concept file, review and update `practical-project.md` accordingly:
+
+- Add the concept to the **Pattern Map** table if applicable.
+- Update or add **flows** that demonstrate the concept in action.
+- Update the **Technology Stack** table if new technologies are introduced.
+- Ensure all cross-references from `practical-project.md` still resolve correctly.
+
+---
+
+## Cross-Referencing
+
+Before writing a new concept, **read all existing concept files** in this folder. Concepts are interrelated — reuse terminology and add inline links between files.
+
+- In **Related Concepts** sections, use relative markdown links: `[Outbox Pattern](outbox-pattern.md)` instead of plain text.
+- When a concept references another existing concept, link to it directly in the text.
+- Keep terminology consistent across files (e.g. always use "dual-write problem" the same way).
+
+---
+
 ## Style Rules
 
 1. **No emojis** in content files.

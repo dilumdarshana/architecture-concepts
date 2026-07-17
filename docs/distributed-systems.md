@@ -199,7 +199,7 @@ Start with a monolith unless there is a clear need for distribution.
 - Microservices
 - Message Queues
 - Event-Driven Architecture
-- Outbox Pattern
+- [Outbox Pattern](outbox-pattern.md)
 - Saga Pattern
 - CQRS
 - CAP Theorem
@@ -211,7 +211,7 @@ Start with a monolith unless there is a clear need for distribution.
 
 - API Gateway
 - Message Queue
-- Outbox Pattern
+- [Outbox Pattern](outbox-pattern.md)
 - Saga Pattern
 - CQRS
 - Event Sourcing
