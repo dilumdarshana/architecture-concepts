@@ -73,6 +73,7 @@ A collection of architectural patterns, technologies, and design concepts — ea
 | Concept | Description |
 |---------|-------------|
 | [Practical Project](practical-project.md) | Reference e-commerce architecture applying all patterns in a real distributed system. |
+| [Interview Study Roadmap](interview-study-roadmap.md) | Progressive learning path from Node.js fundamentals to distributed event-driven systems. |
 
 ---
 
