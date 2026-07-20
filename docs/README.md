@@ -62,6 +62,7 @@ A collection of architectural patterns, technologies, and design concepts — ea
 | [Promise APIs](promise-apis.md) | Coordinating multiple async operations with Promise.all, allSettled, race, and any. |
 | [Cancellation & Timeouts](cancellation-timeouts.md) | AbortController, AbortSignal, and timeout patterns for async operations. |
 | [Error Handling (Express)](error-handling.md) | Centralized async error middleware for consistent error responses. |
+| [Node.js Runtime Architecture](nodejs-runtime.md) | V8, libuv, C++ bindings, and the core JS library — how they compose to run async JavaScript on the server. |
 
 ### Operational Patterns
 
