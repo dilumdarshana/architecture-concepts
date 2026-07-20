@@ -40,15 +40,41 @@ No single library solved all three. Node.js composes V8 (JS engine), libuv (asyn
 │              C++ / C Bindings                        │
 │  fs binding    TCP binding   crypto binding          │
 │  (toggling/cc/)             (src/node_crypto.cc)     │
-│  ┌──────────┐ ┌──────────┐ ┌────────────────────┐   │
-│  │ libuv    │ │ V8 API   │ │  Other C libs       │   │
-│  │ (uv_fs_*)│ │ (Isolate │ │  (c-ares: DNS,      │   │
-│  │          │ │  Handle, │ │   llhttp: HTTP,      │   │
-│  │          │ │  Context) │ │   OpenSSL: TLS)      │   │
-│  └────┬─────┘ └────┬─────┘ └────────────────────┘   │
-└───────┼─────────────┼───────────────────────────────┘
-        │             │
-┌───────▼─────────────▼───────────────────────────────┐
+│  ┌──────────────────────────────────────────────┐    │
+│  │                V8 Engine                      │    │
+│  │  ┌──────────────┐  ┌──────────────────────┐  │    │
+│  │  │ Call Stack    │  │  Microtask Queue     │  │    │
+│  │  │ (exec frames) │  │  (Promise.then,      │  │    │
+│  │  └──────────────┘  │   queueMicrotask)     │  │    │
+│  │                    └──────────────────────┘  │    │
+│  │  Memory heap, GC, JIT compiler               │    │
+│  └──────────────────────────────────────────────┘    │
+│                                                       │
+│  ┌──────────────────────────────────────────────┐    │
+│  │               libuv                           │    │
+│  │  ┌────────────────┐  ┌──────────────────┐    │    │
+│  │  │ Event Loop      │  │  nextTick Queue  │    │    │
+│  │  │ (6 phases)      │  │  (managed by     │    │    │
+│  │  │                 │  │   Node.js, not   │    │    │
+│  │  │  timers ──►     │  │   libuv itself)  │    │    │
+│  │  │  pending ──►    │  └──────────────────┘    │    │
+│  │  │  idle/prep ──►  │                          │    │
+│  │  │  poll ──────────┐                          │    │
+│  │  │  check ──►      │  Phase callback queues:  │    │
+│  │  │  close ──►      │  Each phase has its own  │    │
+│  │  └────────────────┘  fifo queue of callbacks  │    │
+│  │                      (macrotask queues)        │    │
+│  │  Thread pool (4)                               │    │
+│  │  Timer heap                                     │    │
+│  └──────────────────────────────────────────────┘    │
+│                                                       │
+│  ┌──────────────────────────────────────────────┐    │
+│  │  Other C libs                                │    │
+│  │  c-ares (DNS)  llhttp (HTTP)  OpenSSL (TLS)  │    │
+│  └──────────────────────────────────────────────┘    │
+└───────────────────────┬──────────────────────────────┘
+                        │
+┌───────────────────────▼──────────────────────────────┐
 │                   Operating System                    │
 │  Linux / macOS / Windows                              │
 │  Kernel: epoll / kqueue / IOCP                       │
@@ -156,20 +182,118 @@ Used by the `crypto` and `tls` modules for TLS/SSL encryption, hashing, HMAC, si
 
 ---
 
+## Task Queues: Microtasks, Macrotasks, and nextTick
+
+The runtime does not execute callbacks directly from a single queue. There are three distinct queue layers, each owned by a different component, with strict priority rules.
+
+### Ownership
+
+| Queue | Owner | Contains | Runs |
+|-------|-------|----------|------|
+| **Microtask queue** | V8 | `Promise.then`, `Promise.catch`, `queueMicrotask`, `MutationObserver` | After every single JS callback returns, and between every event loop phase |
+| **nextTick queue** | Node.js (not V8, not libuv) | `process.nextTick` callbacks | After every single JS callback returns, **before** V8's microtask queue |
+| **Macrotask (phase) queues** | libuv | `setTimeout`/`setInterval` callbacks (timer phase), I/O callbacks (poll phase), `setImmediate` (check phase), close callbacks (close phase) | One phase at a time, in order; each phase empties its queue before the next phase starts |
+
+### Execution Order
+
+```text
+Call Stack Empty?
+    │
+    ├── YES: drain nextTick queue (entirely)
+    │         │
+    │         └── drain V8 microtask queue (entirely)
+    │                    │
+    │                    └── proceed to one event loop phase
+    │                              │
+    │                              └── execute ONE macrotask from that phase
+    │                                         │
+    │                                         └── repeat (check call stack again)
+    │
+    └── NO: keep executing on the call stack
+
+Priority: nextTick > microtask > macrotask (timer phase → I/O → check → close)
+```
+
+### Visual Timeline
+
+```text
+Call Stack
+   │
+   ├── callback A runs
+   │     ├── setTimeout(cb, 0)  ──► macrotask (timer phase queue)
+   │     ├── Promise.resolve().then(fn)  ──► V8 microtask queue
+   │     └── process.nextTick(fn)  ──► nextTick queue
+   │
+   ├── callback A returns (stack empty)
+   │
+   ├── CHECKPOINT: drain nextTick queue (entirely)
+   │     └── nextTick fn runs
+   │
+   ├── CHECKPOINT: drain V8 microtask queue (entirely)
+   │     └── Promise fn runs
+   │
+   ├── Event loop enters timer phase
+   │     └── setTimeout cb runs (one macrotask)
+   │
+   ├── callback returns (stack empty)
+   │
+   ├── CHECKPOINT: drain nextTick queue (none pending)
+   ├── CHECKPOINT: drain V8 microtask queue (none pending)
+   │
+   └── Event loop moves to next phase (pending callbacks)
+```
+
+### Why nextTick exists separately from V8 microtasks
+
+`process.nextTick` predates Promise-based microtasks in Node.js. It was the original way to defer work until after the current operation but before any I/O. It runs **before** V8's microtasks even though both drain at the same checkpoint:
+
+```typescript
+process.nextTick(() => console.log('nextTick'));
+Promise.resolve().then(() => console.log('microtask'));
+
+// Output:
+// nextTick
+// microtask
+```
+
+Note: `process.nextTick` has no equivalent in browser JavaScript. It is a Node.js-specific API. In modern Node.js code, `queueMicrotask` or `Promise.resolve().then(...)` is preferred over `process.nextTick` because microtask ordering is standardised and portable. See the Node.js docs warning: `process.nextTick` can starve the event loop if called recursively.
+
+### Phase Queues (Macrotask Queues) in Detail
+
+Each event loop phase has its own FIFO queue of callbacks. When the event loop enters a phase, it drains that phase's queue entirely (or up to a hard limit in the poll phase) before moving on:
+
+```text
+Timer phase queue:    [cb1(150ms), cb2(200ms), cb3(150ms)]
+                         │
+pending phase queue:    [tcp_error_cb, udp_send_cb]
+                         │
+poll phase queue:       [fs_read_cb, http_data_cb]
+                         │
+check phase queue:      [setImmediate_cb1, setImmediate_cb2]
+                         │
+close phase queue:      [socket_close_cb]
+```
+
+Between draining each phase, the runtime drains **nextTick** then **microtask** queues entirely.
+
+---
+
 ## How it Works (Request Lifecycle)
 
-A file read request traces through every component:
+A file read request traces through every component, including the task queues:
 
 1. **V8** executes `fs.readFile('/etc/hosts', callback)` — calls into the core JS library.
 2. **Core JS** (`fs.js`) validates the path, creates an internal `FSReqCallback` object, and calls the C++ binding.
 3. **C++ binding** (`node_fs.cc`) creates a `uv_fs_t` request struct and calls `uv_fs_read` (libuv API).
 4. **libuv** checks the OS: File I/O is not truly async on Linux/macOS, so libuv offloads it to the **thread pool** (one of 4 default threads).
 5. **Thread pool** thread reads the file using blocking POSIX `read()` syscall, storing the result in the `uv_fs_t` struct.
-6. When done, the thread queues a completion callback in the **pending** or **poll** phase of the event loop.
-7. **Event loop** (main thread) picks up the callback, calls the C++ completion handler.
+6. When done, the thread queues a completion callback in the **poll phase's macrotask queue**.
+7. **Event loop** (main thread) finishes its current work and enters the poll phase. It picks the completion callback and executes it.
 8. **C++ handler** copies the data from the libuv buffer into a V8 `Buffer` or `string`, and invokes the JavaScript callback.
-9. **V8** executes the JavaScript callback with the result.
-10. If there are no more pending operations, the event loop exits and the process terminates.
+9. **V8** executes the JavaScript callback. During execution, any `Promise.then` or `process.nextTick` are queued.
+10. When the callback returns and the **call stack is empty**, the runtime drains the **nextTick queue**, then the **V8 microtask queue**.
+11. The event loop moves to the **check phase** (setImmediate), then **close phase**, then loops back to **timers**.
+12. If there are no more pending operations in any phase and no active handles, the event loop exits and the process terminates.
 
 ---
 
@@ -194,7 +318,7 @@ A file read request traces through every component:
 
 ## Related Concepts
 
-- [Event Loop](event-loop.md) — the 6-phase loop that libuv implements
+- [Event Loop](event-loop.md) — the 6-phase loop that libuv implements; detailed phase behaviour and microtask ordering
 - [Concurrency vs Parallelism](concurrency-vs-parallelism.md) — V8 runs JS on one thread; libuv thread pool handles I/O; worker threads provide CPU parallelism
 - [Cancellation & Timeouts](cancellation-timeouts.md) — `AbortController` is a JS API; the underlying timer tracking is done by libuv
 - [Graceful Shutdown](graceful-shutdown.md) — signal handling via libuv; event loop drains phases before exit
