@@ -168,6 +168,115 @@ This is the JavaScript layer that developers interact with directly. It wraps th
 | `buffer.js` | `Buffer` class — wraps `node_buffer.cc` for raw memory allocation |
 | `events.js` | `EventEmitter` — pure JS, foundation for all async event handling |
 
+### Module System
+
+Node.js supports two module systems that coexist in the same runtime. The module loader is implemented in JavaScript (`lib/internal/modules/`) and sits in the **Core JS Library** layer — it is not part of V8 or libuv.
+
+| Aspect | CommonJS (CJS) | ES Modules (ESM) |
+|--------|---------------|------------------|
+| **Syntax** | `require('./foo')`, `module.exports = ...` | `import { foo } from './foo.js'`, `export const foo = ...` |
+| **Loader location** | `lib/internal/modules/cjs/` | `lib/internal/modules/esm/` |
+| **Resolution** | Synchronous — `require` blocks until the module is loaded and evaluated | Asynchronous — `import` returns a promise; static imports are resolved before execution begins |
+| **File extension** | `.js`, `.json`, `.node` (`.js` is CJS by default unless `"type": "module"` in package.json) | `.mjs`, or `.js` with `"type": "module"` in package.json |
+| **Caching** | Modules are cached after first `require`; subsequent calls return the cached export | Modules are cached after first evaluation; `import` always returns the same module record |
+| **Top-level await** | Not supported | Supported (in ESM, `await` is valid at the top level) |
+| **Cyclic references** | Handled — returns partially populated exports at the time of the cycle | Handled — uses live bindings that update as the module evaluates |
+
+#### Module Resolution Algorithm (CJS)
+
+When you call `require('lodash')`, Node.js follows this chain:
+
+1. Check if it is a **built-in module** (`fs`, `http`, `path`, etc.) — return immediately.
+2. Check if the path starts with `./` or `../` — resolve relative to the calling file.
+3. If neither, treat it as a **node_modules lookup** — walk up the directory tree looking for `node_modules/lodash`.
+4. Inside the package directory, consult `package.json` fields in order: `"exports"`, `"main"`.
+5. If no package.json or no matching field, look for `index.js`, `index.json`, `index.node`.
+6. If the resolved path ends with `.js`, load as JavaScript; `.json`, parse as JSON; `.node`, load as a compiled C++ addon.
+
+```text
+require('lodash')
+    │
+    ├── built-in? (fs, http...) ──► return built-in module
+    │
+    ├── relative? (./ or ../) ──► resolve relative to __dirname
+    │
+    └── node_modules lookup
+          │
+          └── /app/node_modules/lodash/
+                │
+                ├── package.json: "main": "index.js"
+                └── index.js ──► load and cache
+```
+
+#### ESM Module Resolution
+
+ESM uses a similar algorithm but with an asynchronous phase. The loader discovers the full dependency graph before executing any module. This enables **top-level await** and **live bindings** (exported values are bound by reference, not by value).
+
+```typescript
+// ESM — live bindings
+// counter.js
+export let count = 0;
+export function increment() { count++; }
+
+// main.js
+import { count, increment } from './counter.js';
+console.log(count); // 0
+increment();
+console.log(count); // 1 — the binding is live, not a copy
+```
+
+#### CJS / ESM Interop
+
+The two systems can interoperate with caveats:
+
+| Operation | Works? | Behaviour |
+|-----------|--------|-----------|
+| CJS `require` an ESM module | No | Throws `ERR_REQUIRE_ESM` — ESM modules cannot be loaded via `require` |
+| ESM `import` a CJS module | Yes | The CJS module's `module.exports` is available as the default export |
+| ESM dynamic `import()` a CJS module | Yes | Returns a promise that resolves to the module's exports |
+| ESM `import` a JSON file | Yes (with import assertions) | `import data from './data.json' assert { type: 'json' }` |
+
+```typescript
+// utils.cjs — CommonJS
+module.exports = { greet: (name) => `Hello, ${name}!` };
+
+// app.mjs — ES Module
+import { greet } from './utils.cjs'; // OK: CJS → ESM
+console.log(greet('World'));
+
+// Dynamic import — works in both CJS and ESM
+async function loadModule(name: string) {
+  const mod = await import(`./plugins/${name}.mjs`);
+  return mod.default;
+}
+```
+
+#### Package.json `exports` Field
+
+The modern way to define a package's public API. It replaces `"main"` and enables subpath exports, conditional exports, and encapsulation (private modules cannot be imported).
+
+```json
+{
+  "name": "my-lib",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./utils": {
+      "import": "./dist/utils.mjs",
+      "require": "./dist/utils.cjs"
+    }
+  }
+}
+```
+
+```typescript
+import { thing } from 'my-lib';           // OK — maps to dist/index.mjs
+import { util } from 'my-lib/utils';       // OK — maps to dist/utils.mjs
+import { internal } from 'my-lib/internal'; // ERR — not in "exports"
+```
+
 ### c-ares — DNS Resolution
 
 A separate C library used by libuv for DNS operations that libuv's built-in `getaddrinfo` cannot handle — specifically asynchronous DNS queries with custom resolvers. Used by the `dns` module for functions like `dns.resolve4`, `dns.resolveTxt`.
