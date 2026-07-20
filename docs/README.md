@@ -46,6 +46,7 @@ A collection of architectural patterns, technologies, and design concepts — ea
 | Concept | Description |
 |---------|-------------|
 | [Database Concurrency Control](database-concurrency-control.md) | Transactions, atomic operations, optimistic and pessimistic locking for safe concurrent data access. |
+| [Caching Strategies](caching-strategies.md) | Cache-aside, write-through, write-behind, multi-level caching, invalidation, and stampede prevention. |
 | [Consistent Hashing](consistent-hashing.md) | Ring-based hashing that minimises key remapping when nodes join or leave. |
 | [Replication](replication.md) | Single-leader, multi-leader, and synchronous/asynchronous replication strategies. |
 | [Sharding](sharding.md) | Horizontal partitioning of data across independent databases for scale. |

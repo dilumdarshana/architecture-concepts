@@ -78,6 +78,7 @@ Each architectural pattern maps to a specific problem area:
 | [Backpressure](backpressure.md) | Queue workers limit concurrency; streams use backpressure-aware piping |
 | [Bulkhead Pattern](bulkhead-pattern.md) | Each service has dedicated connection pools per downstream dependency |
 | [Circuit Breaker](circuit-breaker.md) | Order Service wraps downstream Payment API calls with opossum |
+| [Caching Strategies](caching-strategies.md) | Redis cache-aside for user profiles, product catalog, and reference data; write-invalidate on data update |
 | [Idempotency](idempotency.md) | Payment Service deduplicates charge requests on retry |
 | [Retry Pattern](retry-pattern.md) | BullMQ workers use exponential backoff + jitter for payment and notification jobs |
 | Message Queue | Async communication between services (Bull / Redis) |
