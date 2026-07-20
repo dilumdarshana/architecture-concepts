@@ -63,6 +63,7 @@ A collection of architectural patterns, technologies, and design concepts — ea
 | [Cancellation & Timeouts](cancellation-timeouts.md) | AbortController, AbortSignal, and timeout patterns for async operations. |
 | [Error Handling (Express)](error-handling.md) | Centralized async error middleware for consistent error responses. |
 | [Node.js Runtime Architecture](nodejs-runtime.md) | V8, libuv, C++ bindings, and the core JS library — how they compose to run async JavaScript on the server. |
+| [Node.js Event Emitter](nodejs-event-emitter.md) | The observer pattern at the heart of Node.js — EventEmitter API, listeners, memory management, and built-in usage. |
 
 ### Operational Patterns
 
