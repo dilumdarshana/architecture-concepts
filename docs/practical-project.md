@@ -81,7 +81,8 @@ Each architectural pattern maps to a specific problem area:
 | [Caching Strategies](caching-strategies.md) | Redis cache-aside for user profiles, product catalog, and reference data; write-invalidate on data update |
 | [Idempotency](idempotency.md) | Payment Service deduplicates charge requests on retry |
 | [Retry Pattern](retry-pattern.md) | BullMQ workers use exponential backoff + jitter for payment and notification jobs |
-| Message Queue | Async communication between services (Bull / Redis) |
+| Message Queue (BullMQ) | Async communication between services via Redis |
+| [Message Queues](message-queues.md) | BullMQ for order processing; SQS for cross-region event delivery; DLQ for permanently failed payment jobs |
 | API Gateway | Single entry point with routing, auth, rate limiting |
 | [Distributed Tracing](distributed-tracing.md) | OpenTelemetry traces every request across all services, correlated by trace ID |
 | [Leader Election](leader-election.md) | Singleton batch job coordinator (report generation, cache warming) |
