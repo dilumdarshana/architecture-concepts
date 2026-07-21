@@ -125,7 +125,7 @@ Each service owns its own logic and often its own database.
 1. Client sends a request.
 2. Request reaches the appropriate service via an API gateway or load balancer.
 3. Services communicate using:
-   - HTTP/gRPC (synchronous)
+   - HTTP/[gRPC](grpc.md) (synchronous)
    - Message queues/events (asynchronous)
 4. Each service performs its own business logic.
 5. Services may publish events for other services to consume.

@@ -297,7 +297,7 @@ See [Backpressure](backpressure.md) and [Bulkhead Pattern](bulkhead-pattern.md).
 
 ## When NOT to Use
 
-- **Request-response workflows** — if the caller needs an immediate answer, use HTTP/gRPC with a circuit breaker
+- **Request-response workflows** — if the caller needs an immediate answer, use HTTP/[gRPC](grpc.md) with a circuit breaker
 - **Low-volume, simple systems** — a queue adds operational overhead without benefit
 - **Strongly consistent, real-time data** — if stale data is unacceptable, use synchronous reads
 - **Small datasets** — if the entire dataset fits in one database, direct calls are simpler

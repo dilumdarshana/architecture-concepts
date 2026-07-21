@@ -6,7 +6,10 @@ import { applicationEvents } from '../events/applicationEvents';
  */
 export function setupEmailService() {
   applicationEvents.on('order:created', ({ orderId }) => {
-    // Simulate async email dispatch — runs as fire-and-forget
+    // setImmediate defers the work to the next event loop iteration so the HTTP
+    // response is not blocked. For production, use a message queue (BullMQ)
+    // instead of setImmediate for important side effects (email, payments) —
+    // the queue retries on failure and persists the message across restarts.
     setImmediate(() => {
       console.log(`[emailService] Sending confirmation for order ${orderId}...`);
     });

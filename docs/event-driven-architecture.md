@@ -22,7 +22,7 @@ Three core concepts:
 
 ## Problem
 
-In a synchronous request-response architecture (REST, gRPC), services are tightly coupled:
+In a synchronous request-response architecture (REST, [gRPC](grpc.md)), services are tightly coupled:
 
 - A service must know the address of every downstream service it depends on.
 - If a downstream service is slow or unavailable, the caller blocks or fails.

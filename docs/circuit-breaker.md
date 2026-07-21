@@ -216,7 +216,7 @@ class SimpleCircuitBreaker {
 
 ## When to Use
 
-- Wrapping calls to external services over a network (HTTP, gRPC) where failures are expected
+- Wrapping calls to external services over a network (HTTP, [gRPC](grpc.md)) where failures are expected
 - Protecting services that have limited capacity or are prone to cascading failures
 - Any synchronous dependency where a timeout is already configured — the breaker adds failure detection
 - Multi-service architectures where one degraded service should not bring down the whole system

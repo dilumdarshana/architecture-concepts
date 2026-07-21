@@ -275,6 +275,7 @@ Many built-in Node.js APIs extend EventEmitter:
 - **Memory leaks** — forgotten `on` registrations are a common source of leaks in long-running processes
 - **Event name collisions** — any string can be emitted; no type safety without TypeScript enums or a wrapper
 - **No backpressure** — if a listener is slow, there is no mechanism to slow down the emitter
+- **No durability for async listeners** — `setImmediate` defers listener execution to the next event loop iteration so the emitter is not blocked. This works for non-critical work (analytics, debug logging) where losing the occasional event is acceptable. For critical side effects (email, payments, billing), use a message queue ([Message Queues](message-queues.md)) instead — the queue persists the message, retries on failure, and moves it to a dead-letter queue if all retries are exhausted. `setImmediate` has no durability: if the process crashes before the callback fires, the event is lost.
 
 ---
 

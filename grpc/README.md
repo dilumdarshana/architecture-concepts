@@ -1,206 +1,248 @@
-# gRPC Implementation with Typescript
+# gRPC Concepts — TypeScript Demo
 
-A simple demonstration of gRPC with TypeScript and pnpm, showcasing four types of RPC calls: unary, server streaming, client streaming and bidirectional.
+A hands-on demonstration of the four gRPC communication patterns using TypeScript:
 
-## Features
+- **Unary RPC** — single request, single response
+- **Server Streaming RPC** — single request, stream of responses
+- **Client Streaming RPC** — stream of requests, single response
+- **Bidirectional Streaming RPC** — two-way stream of messages
 
-- **Unary RPC**: Simple request-response pattern (SayHello)
-- **Server Streaming RPC**: Server sends multiple responses (GetNumbers)
-- **Client Streaming RPC**: Client sends multiple requests, server responds once (SumNumbers)
-- **Bidirectional Streaming RPC**: Real-time chat with simultaneous send/receive (Chat)
-- Built with TypeScript for type safety
-- Uses pnpm for efficient package management
+## How gRPC Works at a Glance
 
-## Prerequisites
-
-- Node.js
-- pnpm (install with `npm install -g pnpm`)
-
-## Installation
-
-1. Clone or download this project
-2. Install dependencies:
-
-```bash
-pnpm install
 ```
+┌─────────┐   Proto Definition   ┌─────────┐
+│  Client │◄────────────────────►│  Server │
+│  .ts    │   HTTP/2 + Protobuf  │  .ts    │
+└─────────┘                      └─────────┘
+```
+
+1. You define the API in a `.proto` file (service + messages)
+2. Both server and client load the same `.proto` file at runtime
+3. Server implements the defined RPC methods
+4. Client calls those methods — they look like local function calls
 
 ## Project Structure
 
 ```
-grpc-typescript-demo/
+grpc/
 ├── src/
 │   ├── proto/
-│   │   └── greeter.proto    # Protocol Buffer definition
-│   ├── server.ts            # gRPC server implementation
-│   └── client.ts            # gRPC client implementation
+│   │   └── greeter.proto    # Service & message definitions (source of truth)
+│   ├── server.ts            # gRPC server — implements all 4 RPC types
+│   └── client.ts            # gRPC client — calls every RPC method
+├── .nvmrc                   # Node.js version pinning
 ├── package.json
 ├── tsconfig.json
 └── README.md
 ```
 
-## Running the Demo
+## Prerequisites
 
-### Start the Server
+- Node.js (see `.nvmrc` for version)
+- `pnpm` — install with `npm install -g pnpm`
 
-Open a terminal and run:
+## Quick Start
 
 ```bash
+pnpm install
+
+# Terminal 1 — start the server
 pnpm run server
-```
 
-You should see:
-```
-Server running at http://0.0.0.0:5050
-```
-
-### Run the Client
-
-Open another terminal and run:
-
-```bash
+# Terminal 2 — run the client
 pnpm run client
 ```
 
-## Available RPC Methods
+## The 4 RPC Types Explained
 
-### 1. SayHello (Unary RPC)
-Simple request-response pattern.
+### 1. SayHello — Unary RPC
 
-**Request:**
-```typescript
-{ name: 'TypeScript' }
+**Pattern**: Client sends one message → Server replies with one message.
+
+```
+Client                     Server
+  │                          │
+  │──── { name: "World" } ──►│
+  │                          │
+  │◄─── { message: "..." } ──┤
+  │                          │
 ```
 
-**Response:**
+**Code flow** (`server.ts:18`):
 ```typescript
-{ message: 'Hello TypeScript!' }
-```
-
-### 2. GetNumbers (Server Streaming RPC)
-Server sends multiple number responses.
-
-**Request:**
-```typescript
-{ count: 5 }
-```
-
-**Response Stream:**
-```typescript
-{ order: 1, number: 2 }
-{ order: 2, number: 4 }
-{ order: 3, number: 6 }
-...
-```
-
-### 3. SumNumbers (Client Streaming RPC)
-Client sends multiple numbers, server returns the sum.
-
-**Request Stream:**
-```typescript
-{ number: 10 }
-{ number: 20 }
-{ number: 30 }
-...
-```
-
-**Response:**
-```typescript
-{ sum: 150 }
-```
-
-### 4. Chat (Bidirectional Streaming RPC)
-Real-time bidirectional communication where both client and server can send messages simultaneously.
-
-**Client Sends:**
-```typescript
-{ user: 'Alice', message: 'Hello!' }
-{ user: 'Alice', message: 'How are you?' }
-```
-
-**Server Responds:**
-```typescript
-{ user: 'Server', message: 'Echo: Hello!' }
-{ user: 'Server', message: 'Echo: How are you?' }
-
-## Scripts
-
-- `pnpm run server` - Start the gRPC server
-- `pnpm run client` - Run the gRPC client
-- `pnpm run build` - Compile TypeScript to JavaScript
-
-## Understanding the Code
-
-### Protocol Buffer Definition (greeter.proto)
-
-The `.proto` file defines the service interface and message types:
-
-```protobuf
-service Greeter {
-  rpc SayHello (HelloRequest) returns (HelloReply);
-  rpc GetNumbers(NumberRequest) returns (stream NumberResponse);
-  rpc SumNumbers(stream SumRequest) returns (SumResponse);
-  rpc Chat(stream ChatMessage) returns (stream ChatMessage);
+function sayHello(call, callback) {
+  const reply = { message: `Hello ${call.request.name}!!!` };
+  callback(null, reply);  // null = no error
 }
 ```
 
-### Server Implementation
+The server receives a `HelloRequest` (with a `name` field) and responds with a `HelloReply` via the callback.
 
-The server implements three RPC methods:
-- `sayHello`: Returns a greeting message
-- `getNumbers`: Streams a sequence of numbers
-- `sumNumbers`: Receives a stream of numbers and returns their sum
-- `chat`: Bidirectional streaming for real-time chat communication
+---
 
-### Client Implementation
+### 2. GetNumbers — Server Streaming RPC
 
-The client demonstrates how to:
-- Make unary calls
-- Receive streaming responses
-- Send streaming requests
+**Pattern**: Client sends one request → Server pushes multiple responses over time.
 
-## Customisation
-
-### Change Server Port
-
-In `server.ts`, modify:
-```typescript
-const address = '0.0.0.0:5050'; // Change port here
+```
+Client                     Server
+  │                          │
+  │──{ count: 5 }───────────►│
+  │                          │
+  │◄──{ order:1, number:100 }─┤  (1s later)
+  │◄──{ order:2, number:200 }─┤  (2s later)
+  │◄──{ order:3, number:300 }─┤  (3s later)
+  │◄──{ ... }────────────────┤
+  │                          │
 ```
 
-In `client.ts`, update:
+**Code flow** (`server.ts:25`):
+```typescript
+function getNumbers(call) {
+  const count = call.request.count || 10;
+  let current = 1;
+  const intervalId = setInterval(() => {
+    if (current > count) {
+      clearInterval(intervalId);
+      call.end();            // signal "no more data"
+      return;
+    }
+    call.write({ order: current, number: current * 100 });
+    current++;
+  }, 1000);                  // one number every second
+}
+```
+
+Key difference from unary: instead of a callback, use `call.write()` to push data and `call.end()` to finish the stream.
+
+---
+
+### 3. SumNumbers — Client Streaming RPC
+
+**Pattern**: Client sends multiple messages → Server replies once with the aggregate.
+
+```
+Client                     Server
+  │                          │
+  │──{ number: 10 }─────────►│
+  │──{ number: 20 }─────────►│  Server accumulates
+  │──{ number: 30 }─────────►│  values as they arrive
+  │──{ number: 40 }─────────►│
+  │──{ number: 50 }─────────►│
+  │──end────────────────────►│
+  │                          │
+  │◄───{ sum: 150 }─────────┤  Response after client ends
+  │                          │
+```
+
+**Code flow** (`server.ts:41`):
+```typescript
+function sumNumbers(call, callback) {
+  let sum = 0;
+  call.on('data', (request) => { sum += request.number; });
+  call.on('end', () => { callback(null, { sum }); });
+}
+```
+
+The server listens for incoming data events and responds via callback only after the client signals the stream is complete.
+
+---
+
+### 4. Chat — Bidirectional Streaming RPC
+
+**Pattern**: Both sides send messages independently over a single connection.
+
+```
+Client                     Server
+  │                          │
+  │──{ user, message }──────►│
+  │◄──{ user, message }─────┤  Server echoes back
+  │──{ user, message }──────►│
+  │◄──{ user, message }─────┤
+  │──end────────────────────►│
+  │                          │
+```
+
+**Code flow** (`server.ts:54`):
+```typescript
+function chat(call) {
+  call.on('data', (request) => {
+    const reply = { user: 'server', message: `You said: ${request.message}` };
+    call.write(reply);
+  });
+  call.on('end', () => { call.end(); });
+}
+```
+
+Both sides use `call.write()` and `call.on('data')` — there is no callback pattern. This is the most flexible but also the most complex pattern.
+
+## How Server & Client Connect
+
+**Server** (`server.ts:67`):
+```typescript
+const server = new grpc.Server();
+server.addService(greeterProto.Greeter.service, {
+  sayHello, getNumbers, sumNumbers, chat  // ← register implementations
+});
+server.bindAsync('0.0.0.0:5050', grpc.ServerCredentials.createInsecure(), ...);
+```
+
+**Client** (`client.ts:18`):
 ```typescript
 const client = new greeterProto.Greeter(
-  'localhost:5050', // Match server port
+  'localhost:5050',
   grpc.credentials.createInsecure()
 );
 ```
 
-### Add New RPC Methods
+## Proto File — The Source of Truth
 
-1. Define the method in `greeter.proto`
-2. Implement the method in `server.ts`
-3. Call the method from `client.ts`
+```protobuf
+service Greeter {
+  rpc SayHello (HelloRequest) returns (HelloReply);           // unary
+  rpc GetNumbers(NumberRequest) returns (stream NumberResponse);  // server stream
+  rpc SumNumbers(stream SumRequest) returns (SumResponse);        // client stream
+  rpc Chat(stream ChatMessage) returns (stream ChatMessage);      // bidirectional
+}
+```
 
-## Troubleshooting
+The `stream` keyword before a message type tells gRPC that multiple messages will be sent instead of one.
 
-### Port Already in Use
-If you see an error about port 5050 being in use, either:
-- Stop the existing process using that port
-- Change the port number in both server and client
+## Client.ts — What's Active
 
-### Connection Refused
-Make sure the server is running before starting the client.
+Currently only the **bidirectional Chat** is uncommented. To try the other three RPC types, uncomment the corresponding blocks in `client.ts`:
 
-### Proto File Not Found
-Ensure the proto file path in both server and client matches your project structure.
+| Lines | RPC Type | What It Does |
+|-------|----------|-------------|
+| 24–30 | Unary | Calls `SayHello` with a name |
+| 33–45 | Server Stream | Calls `GetNumbers` with count=5 |
+| 48–61 | Client Stream | Calls `SumNumbers` with [10,20,30,40,50] |
+| 64–84 | Bidirectional | Calls `Chat` with 3 messages |
+
+## Scripts
+
+| Command | Description |
+|---------|------------|
+| `pnpm run server` | Start the gRPC server on port 5050 |
+| `pnpm run client` | Run the client (tests all active RPCs) |
+| `pnpm run build` | Compile TypeScript to `./dist` |
+
+## Customization
+
+- **Port** — change `0.0.0.0:5050` in both `server.ts:77` and `client.ts:19`
+- **Add a new RPC** → define it in `greeter.proto`, implement in `server.ts`, call from `client.ts`
+- **Message format** — edit the proto messages and regenerate or update runtime access
+
+## Common Issues
+
+| Symptom | Likely Cause | Fix |
+|---------|-------------|-----|
+| `ECONNREFUSED` | Server not running | Start the server first |
+| `EADDRINUSE` | Port 5050 occupied | Kill the old process or change port |
+| Proto file errors | Wrong path | `__dirname` resolves relative to source; keep `proto/` next to `.ts` files |
 
 ## Learn More
 
-- [gRPC Documentation](https://grpc.io/docs/)
-- [Protocol Buffers](https://developers.google.com/protocol-buffers)
-- [gRPC Node.js Guide](https://grpc.io/docs/languages/node/)
-
-## License
-
-MIT
+- [gRPC Concepts Overview](https://grpc.io/docs/what-is-grpc/core-concepts/)
+- [Protocol Buffers](https://protobuf.dev/)
+- [gRPC Node.js API](https://grpc.io/docs/languages/node/)

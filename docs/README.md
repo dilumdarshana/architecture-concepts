@@ -16,6 +16,7 @@ A collection of architectural patterns, technologies, and design concepts — ea
 | [Delivery Semantics](delivery-semantics.md) | At-most-once, at-least-once, and exactly-once guarantees for message processing. |
 | [Consistency Models](consistency-models.md) | Strong, eventual, causal, and other consistency guarantees for distributed data stores. |
 | [Consensus Algorithms](consensus-algorithms.md) | Raft, Paxos, and how distributed nodes agree on a single value despite failures. |
+| [gRPC](grpc.md) | High-performance RPC using Protocol Buffers and HTTP/2 for typed, streaming inter-service communication. |
 
 ### Event-Driven Architecture
 
