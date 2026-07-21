@@ -47,11 +47,10 @@ Current patterns in the repository:
 
 | Pattern | Example Folders | Status |
 |---------|----------------|--------|
-| CQRS (Command Query Responsibility Segregation) | `examples/cqrs/` | In Progress |
-| Event Sourcing | `examples/event-sourcing/` | Planned |
-| Saga / Distributed Transactions | `examples/sagas/` | Planned |
-| Messaging (Kafka, RabbitMQ) | `examples/messaging/` | Planned |
-| Architecture Concepts (full index) | [`docs/README.md`](docs/README.md) | 22 docs |
+| CQRS (Command Query Responsibility Segregation) | [`cqrs/`](cqrs/) | In Progress |
+| gRPC | [`grpc/`](grpc/) | Done |
+| Event Emitter + Express | [`event-emitter/`](event-emitter/) | Done |
+| Architecture Concepts (full index) | [`docs/README.md`](docs/README.md) | 37 docs |
 
 > More patterns will be added over time, following the same **isolated, hands-on approach**.
 
