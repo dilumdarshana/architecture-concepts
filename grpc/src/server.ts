@@ -38,6 +38,10 @@ function sayHello(call: any, callback: any) {
  * 
  * Instead of a callback, use `call.write()` to stream data and `call.end()` to finish.
  * The client receives each write as a 'data' event on its stream object.
+ * 
+ * Concurrency: `clearInterval` prevents `call.write()` after `call.end()` — the most
+ * common stream race condition. All callbacks run on Node's single event loop, so
+ * there is no interleaving within this function.
  */
 function getNumbers(call: any) {
   const count = call.request.count || 10;
@@ -60,6 +64,10 @@ function getNumbers(call: any) {
  * Listen for 'data' events to accumulate incoming messages.
  * Listen for 'end' to know when the client has finished sending.
  * Use the callback to send the single response back.
+ * 
+ * Concurrency: gRPC serializes 'data' events per-call on the event loop — no two
+ * 'data' handlers run concurrently for the same call. If this handler used `await`,
+ * events could interleave; buffer them first (see README Concurrency section).
  */
 function sumNumbers(call: any, callback: any) {
   let sum = 0;
@@ -78,6 +86,10 @@ function sumNumbers(call: any, callback: any) {
  * 
  * Use `call.on('data')` to read from the client and `call.write()` to send back.
  * The stream stays open until either side calls `call.end()`.
+ * 
+ * Concurrency: data events are serialized per-call, so `call.write()` inside the
+ * handler is safe (no interleaved writes). If the handler needed async work, buffer
+ * events first to avoid interleaving during `await`.
  */
 function chat(call: any) {
   call.on('data', (request: any) => {

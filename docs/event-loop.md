@@ -183,7 +183,7 @@ Call Stack (synchronous execution)
 
 ## Advantages
 
-- **Single-threaded simplicity** — no race conditions or lock contention for application code
+- **Single-threaded simplicity** — no data races (simultaneous memory writes) or lock contention; all application code on one thread avoids the need for mutexes. However, **logic-level race conditions** can still occur when `await` yields the event loop and state changes between operations (see [Race Conditions](nodejs-race-conditions.md)).
 - **Deterministic microtask ordering** — `process.nextTick` before Promise callbacks before macrotasks
 - **Efficient I/O** — the poll phase blocks waiting for events, using zero CPU while idle
 - **Non-blocking by default** — I/O never blocks the call stack; callbacks run when data is ready
@@ -226,6 +226,7 @@ Call Stack (synchronous execution)
 - [Promise APIs](promise-apis.md) — Promise callbacks run as microtasks between event loop phases
 - [Graceful Shutdown](graceful-shutdown.md) — signal handlers are processed in the event loop; understanding phases helps prevent shutdown hangs
 - [Cancellation & Timeouts](cancellation-timeouts.md) — `AbortController` integrates with event loop phases for timely cancellations
+- [Race Conditions](nodejs-race-conditions.md) — the event loop's single thread eliminates data races but logic-level races (async interleaving) remain
 - libuv
 - setImmediate vs setTimeout vs process.nextTick
 - Microtask / Macrotask
@@ -234,4 +235,4 @@ Call Stack (synchronous execution)
 
 ## Key Takeaways
 
-> The event loop has six phases (timers, pending callbacks, idle/prepare, poll, check, close callbacks) with microtask checkpoints between each. `process.nextTick` runs before Promise callbacks, which run before the next phase. CPU-bound operations block all phases — always offload to worker threads. Use `setImmediate` for after-I/O work, `setTimeout` for actual delays, and avoid recursive `process.nextTick` to prevent starvation.
+> The event loop has six phases (timers, pending callbacks, idle/prepare, poll, check, close callbacks) with microtask checkpoints between each. `process.nextTick` runs before Promise callbacks, which run before the next phase. CPU-bound operations block all phases — always offload to worker threads. Use `setImmediate` for after-I/O work, `setTimeout` for actual delays, and avoid recursive `process.nextTick` to prevent starvation. The single thread eliminates data races but **logic-level races** (async interleaving) can still occur — see [Race Conditions](nodejs-race-conditions.md).

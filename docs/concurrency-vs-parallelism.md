@@ -138,7 +138,7 @@ Worker Thread Pool (parallel CPU)
 ## Advantages
 
 - **Efficient I/O** — async concurrency handles thousands of simultaneous connections with minimal overhead
-- **Simpler mental model** — single-threaded event loop avoids race conditions and locking
+- **Simpler mental model** — single-threaded event loop avoids data races and locking; however, logic-level races (async interleaving) can still occur (see [Race Conditions](nodejs-race-conditions.md))
 - **Deterministic** — no thread-safety bugs for I/O-bound code
 - **CPU scalability** — worker threads scale CPU work across cores when needed
 - **Resource efficient** — lower memory per connection than thread-per-request models

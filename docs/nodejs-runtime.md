@@ -410,7 +410,7 @@ A file read request traces through every component, including the task queues:
 
 - **Single-threaded simplicity** — developers write sequential-looking code without managing threads
 - **Non-blocking I/O** — one thread handles thousands of concurrent connections efficiently
-- **Shared nothing** — no thread-safety bugs for I/O code (data is not shared across threads)
+- **Shared nothing** — no data-race bugs for I/O code (JS objects are not shared across threads); logic-level race conditions from async interleaving can still occur (see [Race Conditions](nodejs-race-conditions.md))
 - **Component isolation** — V8, libuv, and bindings are independently maintained and improved
 - **Extensibility** — C++ addons (N-API) allow native modules to integrate at the binding layer
 

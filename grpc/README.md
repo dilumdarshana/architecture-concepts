@@ -241,8 +241,55 @@ Currently only the **bidirectional Chat** is uncommented. To try the other three
 | `EADDRINUSE` | Port 5050 occupied | Kill the old process or change port |
 | Proto file errors | Wrong path | `__dirname` resolves relative to source; keep `proto/` next to `.ts` files |
 
+## Concurrency Considerations
+
+### Safe — Single event loop
+gRPC Node.js handlers run on JavaScript's single thread ([event-loop doc](../docs/event-loop.md)). Inside a single handler invocation, `data` events are serialized — no two events for the same call execute concurrently.
+
+```typescript
+// sumNumbers — safe, events are serialized by the event loop
+call.on('data', (req) => { sum += req.number; });
+```
+
+### Guard — `call.write()` after `call.end()`
+Calling `write()` on a closed stream throws an error. Always ensure the stream is still open before writing:
+
+```typescript
+// getNumbers — clearInterval prevents write after end
+function getNumbers(call) {
+  let current = 1;
+  const timer = setInterval(() => {
+    if (current > count) { clearInterval(timer); call.end(); return; }
+    call.write({ order: current, ... });
+    current++;
+  }, 1000);
+}
+```
+
+### Watch — async handlers and interleaved events
+If a streaming handler uses `await`, other events for the same call can arrive before the `await` resolves. Buffer or coordinate if event order matters:
+
+```typescript
+// Unsafe — data events can interleave during await
+call.on('data', async (req) => {
+  await db.save(req);  // another 'data' event can fire here
+});
+
+// Safe — collect then process
+const buffer: Request[] = [];
+call.on('data', (req) => { buffer.push(req); });
+call.on('end', async () => {
+  for (const req of buffer) { await db.save(req); }
+});
+```
+
+### Share — no shared mutable state
+This demo is stateless. In production, if multiple RPC handlers access shared state (counters, caches, DB), use the same concurrency controls as any Node.js app — avoid read-modify-write without protection ([database-concurrency-control doc](../docs/database-concurrency-control.md)).
+
 ## Learn More
 
 - [gRPC Concepts Overview](https://grpc.io/docs/what-is-grpc/core-concepts/)
 - [Protocol Buffers](https://protobuf.dev/)
 - [gRPC Node.js API](https://grpc.io/docs/languages/node/)
+- [Event Loop — Node.js Concurrency Model](../docs/event-loop.md)
+- [Promise APIs — Async Coordination](../docs/promise-apis.md)
