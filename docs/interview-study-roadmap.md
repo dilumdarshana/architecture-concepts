@@ -296,6 +296,21 @@ Another 17 questions from an earlier round. Entries marked "(see Set 1 Qx)" dupl
 | 16 | What specific steps to stop new connections, deal with keep-alive sockets, wait for in-flight requests? | (see Set 1 Q7) | Same as Set 1 Q7 |
 | 17 | How do you centralize error handling for async route handlers in Express so thrown/rejected errors reliably reach one error middleware? | `asyncHandler` wrapper catches rejected promises, `next(error)` forwards to centralized error middleware. Custom error classes with status codes. Never `try/catch` in every handler | [Error Handling (Express)](error-handling.md) |
 
+### Set 3 — Idempotency Deep-Dive, Outbox, Shutdown, Event Loop
+
+Mostly overlaps with Set 1 and Set 2. Two new angles: lock expiry + durable idempotency, and row-level claim-check for concurrent consumers.
+
+| # | Question | Key Concepts | Docs to Study |
+|---|----------|--------------|---------------|
+| 1 | How do you design consumers to be idempotent — what identifiers/state do you persist? | (see Set 1 Q3) | Same as Set 1 Q3 |
+| 2 | Lock expires mid-processing, second consumer starts — how do you still not double-charge? | Distributed lock + durable idempotency record as secondary safeguard. Lock lease renewal, `try/finally` release, but always check idempotency store before acting | [Distributed Lock](distributed-lock.md), [Idempotency](idempotency.md) |
+| 3 | How do you ensure you don't ack the input message unless the outgoing event is durably published? | (see Set 1 Q3, Q4 — outbox pattern) | Same as Set 1 Q3/Q4 |
+| 4 | How would you implement this with an Outbox pattern — tables/fields, exact sequence? | (see Set 1 Q4) | Same as Set 1 Q4 |
+| 5 | Two Node.js consumers updating the same message row concurrently — processed exactly once? | `SELECT ... FOR UPDATE SKIP LOCKED` to claim unique messages. Only the claiming consumer processes and acks. Others skip to the next unclaimed row | [Claim-Check Pattern](claim-check-pattern.md), [Database Concurrency Control](database-concurrency-control.md) |
+| 6 | How would you implement graceful shutdown in a Node.js message consumer so in-flight jobs finish (or are safely re-queued) before exit? | (see Set 1 Q6, Q7) | Same as Set 1 Q6/Q7 |
+| 7 | Which process signals/events, what steps (stop pulling, drain tasks, close connections)? | (see Set 1 Q7) | Same as Set 1 Q7 |
+| 8 | How do you prevent the event loop from being blocked by CPU-heavy work in an HTTP/API service? | (see Set 2 Q3) | Same as Set 2 Q3 |
+
 ### Focus Areas
 
 The questions cluster around key docs — prioritise these for polish:
@@ -303,14 +318,16 @@ The questions cluster around key docs — prioritise these for polish:
 - **[Event Versioning](event-versioning.md)** — Set 1 Q4, Q5. Backward/forward compatibility, upcast functions, tolerant reader.
 - **[API Versioning](api-versioning.md)** — Set 1 Q6, Q7, Q8. Express router isolation, shared vs version-specific logic, deprecation lifecycle.
 - **[Rollout Strategies](rollout-strategies.md)** — Set 1 Q8, Q9. Feature flags, canary releases, deterministic bucketing, metrics-gated rollout.
-- **[Idempotency](idempotency.md)** — Set 1 Q3, Set 2 Q9, Q10. Dedup table flow, send-log pattern, exactly-once email, idempotency for external API side effects.
+- **[Idempotency](idempotency.md)** — Set 1 Q3, Set 2 Q9, Q10, Set 3 Q2. Dedup table flow, send-log pattern, exactly-once email, durable idempotency beyond locks.
 - **[Concurrency vs Parallelism](concurrency-vs-parallelism.md)** — Set 2 Q1, Q2, Q3, Q4. Concurrency vs parallelism, thread vs process decision, blocking the event loop.
 - **[Event Loop](event-loop.md)** — Set 2 Q3, Q12. Relationship with call stack, how CPU blocks all phases.
-- **[Database Concurrency Control](database-concurrency-control.md)** — Set 2 Q2, Q6, Q7. Optimistic locking, version fields, race conditions across consumers.
+- **[Database Concurrency Control](database-concurrency-control.md)** — Set 2 Q2, Q6, Q7, Set 3 Q5. Optimistic locking, version fields, `SELECT FOR UPDATE SKIP LOCKED` for consumer claiming.
 - **[Error Handling (Express)](error-handling.md)** — Set 2 Q17. asyncHandler, centralized error middleware.
 - **[Cancellation & Timeouts](cancellation-timeouts.md)** — Set 2 Q5. AbortController, cleanup on abort.
+- **[Claim-Check Pattern](claim-check-pattern.md)** — Set 3 Q5. Row-level locking for exactly-once consumer processing.
+- **[Distributed Lock](distributed-lock.md)** — Set 3 Q2. Lock as first line of defence, idempotency store as second.
 
-Each of these docs has an **Interview Checkpoint** in its phase above and a **Key Takeaways** section — recite those aloud until fluent. Focus especially on the docs that appear across multiple questions (Concurrency vs Parallelism, Idempotency, Database Concurrency Control).
+Each of these docs has an **Interview Checkpoint** in its phase above and a **Key Takeaways** section — recite those aloud until fluent. Focus especially on the docs that appear across multiple question sets (Idempotency, Database Concurrency Control, Concurrency vs Parallelism).
 
 ---
 
