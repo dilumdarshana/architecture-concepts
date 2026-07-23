@@ -6,6 +6,13 @@ A collection of architectural patterns, technologies, and design concepts — ea
 
 ## Index
 
+### Study Plans
+
+| Plan | Description |
+|------|-------------|
+| [Interview Study Roadmap](interview-study-roadmap.md) | Progressive learning path from Node.js fundamentals to distributed event-driven systems — 9 phases, 36 steps. |
+| [2-Day Study Plan](2-day-study-plan.md) | Intensive 2-day interview prep covering runtime, data, events, resilience, operations, testing, and capstone walkthrough. |
+
 ### Distributed Systems Fundamentals
 
 | Concept | Description |
