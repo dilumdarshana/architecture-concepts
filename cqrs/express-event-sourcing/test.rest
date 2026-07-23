@@ -1,0 +1,24 @@
+### Health check
+GET http://localhost:3001/health
+
+### Create a task
+POST http://localhost:3001/api/commands/tasks
+Content-Type: application/json
+
+{
+  "title": "Implement Event Sourcing"
+}
+
+### Get task (replace with the ID from the create response)
+GET http://localhost:3001/api/queries/tasks/REPLACE_WITH_ID
+
+### Update task status (replace with the ID from the create response)
+PATCH http://localhost:3001/api/commands/tasks/REPLACE_WITH_ID/status
+Content-Type: application/json
+
+{
+  "status": "IN_PROGRESS"
+}
+
+### Get task again to see updated status
+GET http://localhost:3001/api/queries/tasks/REPLACE_WITH_ID

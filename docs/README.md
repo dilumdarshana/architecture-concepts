@@ -28,6 +28,7 @@ A collection of architectural patterns, technologies, and design concepts — ea
 | [Saga Pattern](saga-pattern.md) | Sequence of local transactions with compensating actions for multi-service workflows. |
 | [CQRS](cqrs.md) | Separating read and write models for independent optimisation and scaling. |
 | [Event Sourcing](event-sourcing.md) | Append-only event store as source of truth with replayable projections. |
+| [Event Versioning](event-versioning.md) | Strategies for evolving event schemas without breaking existing consumers or producers. |
 
 ### Resilience & Reliability
 
@@ -75,6 +76,8 @@ A collection of architectural patterns, technologies, and design concepts — ea
 | [Distributed Tracing](distributed-tracing.md) | Tracking requests across service boundaries with OpenTelemetry. |
 | [Service Discovery](service-discovery.md) | How services find each other dynamically via registries and DNS. |
 | [Leader Election](leader-election.md) | Selecting one node as coordinator using leases or consensus. |
+| [Rollout Strategies](rollout-strategies.md) | Feature flags, canary releases, and percentage rollouts for safe deployments. |
+| [API Versioning](api-versioning.md) | Strategies for evolving HTTP APIs without breaking existing clients. |
 
 ### Reference Architecture
 

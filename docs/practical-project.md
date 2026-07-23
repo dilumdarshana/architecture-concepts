@@ -100,6 +100,9 @@ Each architectural pattern maps to a specific problem area:
 | [Cancellation & Timeouts](cancellation-timeouts.md) | HTTP routes use AbortController to cancel DB queries on client disconnect; outbox publisher uses timeout to prevent hung pollers |
 | [Event Loop](event-loop.md) | Every Node.js service runs on the event loop; understanding phases prevents blocking and starvation |
 | [Claim-Check Pattern](claim-check-pattern.md) | Inventory Service uses `SELECT ... FOR UPDATE SKIP LOCKED` on reservation rows to prevent concurrent overselling |
+| [Event Versioning](event-versioning.md) | All services version event schemas for backward compatibility; consumers use upcast functions to handle older event versions |
+| [API Versioning](api-versioning.md) | API Gateway mounts versioned Express routers (`/api/v1`, `/api/v2`) with deprecation headers and sunset timelines |
+| [Rollout Strategies](rollout-strategies.md) | Feature flags control gradual rollout of new checkout flow; percentage routing for canary deployments |
 
 ---
 

@@ -1,0 +1,26 @@
+{
+  "name": "express-event-sourcing",
+  "version": "1.0.0",
+  "description": "CQRS + Event Sourcing demo with Express, TypeScript, and PostgreSQL",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "ts-node-dev --env-file=.env --respawn --transpile-only src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.27.0",
+  "dependencies": {
+    "express": "^5.2.1",
+    "pg": "^8.22.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.1.1",
+    "@types/pg": "^8.20.0",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^7.0.2"
+  }
+}
