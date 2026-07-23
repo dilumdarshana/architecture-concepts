@@ -103,6 +103,8 @@ Each architectural pattern maps to a specific problem area:
 | [Event Versioning](event-versioning.md) | All services version event schemas for backward compatibility; consumers use upcast functions to handle older event versions |
 | [API Versioning](api-versioning.md) | API Gateway mounts versioned Express routers (`/api/v1`, `/api/v2`) with deprecation headers and sunset timelines |
 | [Rollout Strategies](rollout-strategies.md) | Feature flags control gradual rollout of new checkout flow; percentage routing for canary deployments |
+| [Database Migrations](database-migrations.md) | Expand-migrate-contract pattern for zero-downtime schema changes across rolling deploys |
+| [Testing Event-Driven Systems](testing-event-driven-systems.md) | In-memory event store for unit tests; integration tests with testcontainers for projections and handlers |
 
 ---
 

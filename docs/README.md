@@ -49,6 +49,7 @@ A collection of architectural patterns, technologies, and design concepts — ea
 | Concept | Description |
 |---------|-------------|
 | [Database Concurrency Control](database-concurrency-control.md) | Transactions, atomic operations, optimistic and pessimistic locking for safe concurrent data access. |
+| [Database Migrations](database-migrations.md) | Zero-downtime schema changes using expand-migrate-contract pattern. |
 | [Caching Strategies](caching-strategies.md) | Cache-aside, write-through, write-behind, multi-level caching, invalidation, and stampede prevention. |
 | [Consistent Hashing](consistent-hashing.md) | Ring-based hashing that minimises key remapping when nodes join or leave. |
 | [Replication](replication.md) | Single-leader, multi-leader, and synchronous/asynchronous replication strategies. |
@@ -78,6 +79,12 @@ A collection of architectural patterns, technologies, and design concepts — ea
 | [Leader Election](leader-election.md) | Selecting one node as coordinator using leases or consensus. |
 | [Rollout Strategies](rollout-strategies.md) | Feature flags, canary releases, and percentage rollouts for safe deployments. |
 | [API Versioning](api-versioning.md) | Strategies for evolving HTTP APIs without breaking existing clients. |
+
+### Testing & Quality
+
+| Concept | Description |
+|---------|-------------|
+| [Testing Event-Driven Systems](testing-event-driven-systems.md) | Unit, integration, and contract testing strategies for handlers, projections, idempotency, and outbox. |
 
 ### Reference Architecture
 
