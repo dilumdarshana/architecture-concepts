@@ -256,6 +256,35 @@ Run the system in production.
 
 ---
 
+## Mock Interview Questions Reference
+
+Nine questions from a mock AI interview, mapped to the docs that address each gap.
+
+| # | Question | Key Concepts | Docs to Study |
+|---|----------|--------------|---------------|
+| 1 | How do you handle backpressure when streaming data (e.g., reading from a DB/file and writing to an HTTP response) in Node.js? | Stream `drain` events, `highWaterMark`, `pipeline` vs pipe, readableFlowing, backpressure-aware piping | [Backpressure](backpressure.md) |
+| 2 | In an event-driven architecture, how do you decide between emitting an event vs sending a command, and what guarantees would you expect from each? | Event = past fact, fan-out, loose coupling. Command = intent, directed, stronger handling expectations. CQRS separates command and query responsibilities | [Event-Driven Architecture](event-driven-architecture.md), [CQRS](cqrs.md) |
+| 3 | How would you implement idempotency for event consumers so retries or duplicate deliveries don't cause double side effects? | Idempotency key table (key + result + processed_at), dedup before processing, at-least-once + idempotent consumer = exactly-once semantics | [Idempotency](idempotency.md), [Delivery Semantics](delivery-semantics.md) |
+| 4 | When designing schema evolution for events, how do you change an event payload without breaking existing consumers? | New event type vs new version field, upcast functions transform old schemas to latest, schema registry for validation | [Event Versioning](event-versioning.md) |
+| 5 | How do you ensure backward and forward compatibility when adding, removing, or renaming fields in an event schema? | Backward compatible (new reader processes old events via upcast). Forward compatible (old reader ignores unknown fields — tolerant reader). Schema-on-read decouples production from consumption | [Event Versioning](event-versioning.md) |
+| 6 | In Node.js/Express, if you support `/v1` and `/v2` concurrently, how do you structure routing and shared business logic to avoid duplication while keeping behavior isolated per version? | Separate Express routers per version mounted at different paths. Shared services layer for cross-cutting concerns (auth, logging). Version-specific controllers for divergent behavior | [API Versioning](api-versioning.md) |
+| 7 | How do you decide what belongs in shared logic versus version-specific logic when behavior differs subtly (e.g., validation rules or response fields)? | Drive from business requirements — shared services for unchanged business rules, strategy/per-version function for differences. Composition over duplication | [API Versioning](api-versioning.md) |
+| 8 | What's your strategy for introducing a breaking change safely — deprecation timeline, monitoring, and communication? | Sunset header, deprecation notice in response, monitoring consumer usage analytics, clear migration deadline communicated in advance, maintain old version until traffic drops to zero | [API Versioning](api-versioning.md), [Rollout Strategies](rollout-strategies.md) |
+| 9 | How would you implement a gradual rollout (canary) at runtime — what signals or routing rules decide which requests go to v1 vs v2? | Feature flags with deterministic user bucketing (hash(user_id) % 100), percentage ramp (allowlist → 10% → 50% → 100%), metrics-gated progression, instant flag toggle for rollback | [Rollout Strategies](rollout-strategies.md) |
+
+### Focus Areas
+
+The questions cluster around four docs — prioritise these for polish:
+
+- **[Event Versioning](event-versioning.md)** — Q4, Q5. Backward/forward compatibility, upcast functions, tolerant reader. This was the weakest area in the mock interview.
+- **[API Versioning](api-versioning.md)** — Q6, Q7, Q8. Express router isolation, shared vs version-specific logic, deprecation lifecycle.
+- **[Rollout Strategies](rollout-strategies.md)** — Q8, Q9. Feature flags, canary releases, deterministic bucketing, metrics-gated rollout.
+- **[Idempotency](idempotency.md)** — Q3. Dedup table flow, at-least-once + idempotent consumer = exactly-once.
+
+Each of these docs has an **Interview Checkpoint** in its phase above and a **Key Takeaways** section — recite those aloud until fluent.
+
+---
+
 ## Key Takeaways
 
 > Study in phase order — runtime first, then theory, then async patterns, then data, then events, then resilience, then operations, then testing, then compose everything. For each doc, memorise the Key Takeaways as your elevator pitch, trace the Architecture diagram aloud, and rewrite the Node.js code from memory. The Practical Project ties every concept into a single end-to-end flow — be able to walk through the Place Order flow in under 5 minutes, naming every pattern and why it is used. The interview questions test depth: never stop at the first answer — prepare for the "what if it fails?" follow-up on every pattern.
