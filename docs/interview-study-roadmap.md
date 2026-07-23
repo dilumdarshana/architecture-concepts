@@ -272,16 +272,45 @@ Nine questions from a mock AI interview, mapped to the docs that address each ga
 | 8 | What's your strategy for introducing a breaking change safely — deprecation timeline, monitoring, and communication? | Sunset header, deprecation notice in response, monitoring consumer usage analytics, clear migration deadline communicated in advance, maintain old version until traffic drops to zero | [API Versioning](api-versioning.md), [Rollout Strategies](rollout-strategies.md) |
 | 9 | How would you implement a gradual rollout (canary) at runtime — what signals or routing rules decide which requests go to v1 vs v2? | Feature flags with deterministic user bucketing (hash(user_id) % 100), percentage ramp (allowlist → 10% → 50% → 100%), metrics-gated progression, instant flag toggle for rollback | [Rollout Strategies](rollout-strategies.md) |
 
+### Set 2 — Runtime, Async, & Concurrency
+
+Another 17 questions from an earlier round. Entries marked "(see Set 1 Qx)" duplicate the topic above — focus your polish on the new entries.
+
+| # | Question | Key Concepts | Docs to Study |
+|---|----------|--------------|---------------|
+| 1 | What's the difference between concurrency and parallelism in async programming, and why does it matter? | Concurrency = managing many tasks (interleaving). Parallelism = executing many tasks at once (simultaneous). Event loop model vs multi-threaded | [Concurrency vs Parallelism](concurrency-vs-parallelism.md) |
+| 2 | What can go wrong if you assume concurrency gives you thread-safety? | Shared state + async interleaving = logic-level race conditions even on a single thread. Async/await does not guarantee atomicity | [Node.js Race Conditions](nodejs-race-conditions.md), [Database Concurrency Control](database-concurrency-control.md) |
+| 3 | How do you prevent one long-running CPU-bound task from blocking other async tasks? | Event loop phases — CPU blocks all 6 phases. Offload CPU work to `worker_threads` so the event loop stays responsive for I/O | [Event Loop](event-loop.md), [Concurrency vs Parallelism](concurrency-vs-parallelism.md) |
+| 4 | How do you decide between thread pool vs separate process pool for offloaded CPU work? | `worker_threads` (shared memory, lighter, same process) for CPU tasks like image resizing. `child_process` (separate memory, stronger isolation) for running non-Node.js binaries like ffmpeg | [Concurrency vs Parallelism](concurrency-vs-parallelism.md) |
+| 5 | How do you handle cancellation and timeouts for async tasks so orphaned work is cleaned up? | `AbortController`, `AbortSignal`, timeout wrappers, cleanup handlers on abort, `Promise.race` with rejection on timeout | [Cancellation & Timeouts](cancellation-timeouts.md), [Promise APIs](promise-apis.md) |
+| 6 | When multiple async tasks share state, how do you avoid race conditions while keeping throughput high? | Single authoritative state owner, atomic DB operations (Prisma `update` with version check), avoid shared mutable state across async boundaries | [Node.js Race Conditions](nodejs-race-conditions.md), [Database Concurrency Control](database-concurrency-control.md) |
+| 7 | How do you prevent race conditions when multiple consumers update the same aggregate based on events? | Optimistic concurrency — version field on aggregate, `UPDATE ... WHERE version = :expected`, `UNIQUE(aggregate_id, version)` in event store. Event sourcing eliminates conflicting writes (append-only) | [Database Concurrency Control](database-concurrency-control.md), [Event Sourcing](event-sourcing.md) |
+| 8 | How would you design idempotency end-to-end so a consumer can safely process the same message multiple times? | (see Set 1 Q3) | Same as Set 1 Q3 |
+| 9 | How do you handle idempotency for non-database side effects (payment API, email) when the same event is redelivered? | Idempotency key in external API request header. Send-log table (recipient + subject + idem_key UNIQUE). Check-before-act: query send-log, skip if record exists | [Idempotency](idempotency.md) |
+| 10 | How would you implement exactly-once email send with idempotency key and a persistent send-log? | Send-log table: `(idempotency_key, recipient, subject, sent_at)` with UNIQUE on key. On receive: check send-log → if found, skip; if not, send → insert send-log atomically | [Idempotency](idempotency.md) |
+| 11 | Event ID flow — what's the exact server-side flow? | (see Set 1 Q3) | Same as Set 1 Q3 |
+| 12 | What's the difference between the event loop and the call stack, and how does it affect handling many concurrent requests? | Call stack runs synchronous JS (LIFO). Event loop coordinates async callbacks across 6 phases. Non-blocking I/O lets the call stack unwind while the event loop picks up results later — this is how Node handles high concurrency on one thread | [Event Loop](event-loop.md) |
+| 13 | When would you choose `worker_threads` over non-blocking async I/O? | (see Set 2 Q3, Q4) | Same as Set 2 Q3/Q4 |
+| 14 | How would you implement graceful shutdown — stop accepting new requests, finish in-flight, close resources? | (see Set 1 Q6) | Same as Set 1 Q6 |
+| 15 | How do you track in-flight requests so shutdown waits for them (with a timeout)? | (see Set 1 Q7) | Same as Set 1 Q7 |
+| 16 | What specific steps to stop new connections, deal with keep-alive sockets, wait for in-flight requests? | (see Set 1 Q7) | Same as Set 1 Q7 |
+| 17 | How do you centralize error handling for async route handlers in Express so thrown/rejected errors reliably reach one error middleware? | `asyncHandler` wrapper catches rejected promises, `next(error)` forwards to centralized error middleware. Custom error classes with status codes. Never `try/catch` in every handler | [Error Handling (Express)](error-handling.md) |
+
 ### Focus Areas
 
-The questions cluster around four docs — prioritise these for polish:
+The questions cluster around key docs — prioritise these for polish:
 
-- **[Event Versioning](event-versioning.md)** — Q4, Q5. Backward/forward compatibility, upcast functions, tolerant reader. This was the weakest area in the mock interview.
-- **[API Versioning](api-versioning.md)** — Q6, Q7, Q8. Express router isolation, shared vs version-specific logic, deprecation lifecycle.
-- **[Rollout Strategies](rollout-strategies.md)** — Q8, Q9. Feature flags, canary releases, deterministic bucketing, metrics-gated rollout.
-- **[Idempotency](idempotency.md)** — Q3. Dedup table flow, at-least-once + idempotent consumer = exactly-once.
+- **[Event Versioning](event-versioning.md)** — Set 1 Q4, Q5. Backward/forward compatibility, upcast functions, tolerant reader.
+- **[API Versioning](api-versioning.md)** — Set 1 Q6, Q7, Q8. Express router isolation, shared vs version-specific logic, deprecation lifecycle.
+- **[Rollout Strategies](rollout-strategies.md)** — Set 1 Q8, Q9. Feature flags, canary releases, deterministic bucketing, metrics-gated rollout.
+- **[Idempotency](idempotency.md)** — Set 1 Q3, Set 2 Q9, Q10. Dedup table flow, send-log pattern, exactly-once email, idempotency for external API side effects.
+- **[Concurrency vs Parallelism](concurrency-vs-parallelism.md)** — Set 2 Q1, Q2, Q3, Q4. Concurrency vs parallelism, thread vs process decision, blocking the event loop.
+- **[Event Loop](event-loop.md)** — Set 2 Q3, Q12. Relationship with call stack, how CPU blocks all phases.
+- **[Database Concurrency Control](database-concurrency-control.md)** — Set 2 Q2, Q6, Q7. Optimistic locking, version fields, race conditions across consumers.
+- **[Error Handling (Express)](error-handling.md)** — Set 2 Q17. asyncHandler, centralized error middleware.
+- **[Cancellation & Timeouts](cancellation-timeouts.md)** — Set 2 Q5. AbortController, cleanup on abort.
 
-Each of these docs has an **Interview Checkpoint** in its phase above and a **Key Takeaways** section — recite those aloud until fluent.
+Each of these docs has an **Interview Checkpoint** in its phase above and a **Key Takeaways** section — recite those aloud until fluent. Focus especially on the docs that appear across multiple questions (Concurrency vs Parallelism, Idempotency, Database Concurrency Control).
 
 ---
 
