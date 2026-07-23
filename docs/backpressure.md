@@ -64,6 +64,47 @@ readStream.on('data', (chunk) => {
 });
 ```
 
+### Database Cursor to Slow HTTP Client
+
+When streaming a large database result to an HTTP response, backpressure ensures the DB does not fetch rows faster than the network can send them:
+
+```typescript
+import { Client, QueryResultRow } from 'pg';
+import { Transform, pipeline } from 'stream';
+import { createServer } from 'http';
+
+const server = createServer(async (req, res) => {
+  const client = new Client();
+  await client.connect();
+
+  res.writeHead(200, { 'content-type': 'application/jsonl' });
+
+  const dbStream = client
+    .query(new Query('SELECT * FROM large_table'))
+    .cursor(100)                // fetch 100 rows at a time
+    .stream();                  // readable stream of Row objects
+
+  const serializer = new Transform({
+    objectMode: true,
+    transform(row: QueryResultRow, encoding, callback) {
+      callback(null, JSON.stringify(row) + '\n');
+    }
+  });
+
+  pipeline(dbStream, serializer, res, (err) => {
+    client.end();
+    if (err) console.error('Stream failed:', err);
+  });
+
+  req.on('close', () => {
+    client.end();               // clean up on disconnect
+    dbStream.destroy();
+  });
+});
+```
+
+When the client is slow, `res.write()` returns `false` once its internal buffer exceeds `highWaterMark`. The readable stream (`dbStream`) is automatically paused — the PostgreSQL cursor stops fetching rows. When the client catches up, a `drain` event fires and the stream resumes. `pipeline` manages this lifecycle automatically.
+
 ### HTTP Backpressure with AbortController
 
 When a client disconnects, the server should stop processing:
