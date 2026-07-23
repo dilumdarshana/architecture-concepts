@@ -11,3 +11,6 @@ build/
 
 # OS
 .DS_Store
+
+# Personal plans
+docs/2-day-study-plan.md
