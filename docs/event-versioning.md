@@ -269,6 +269,181 @@ Popular registries: Confluent Schema Registry (Kafka), AWS Glue Schema Registry,
 
 ---
 
+## End-to-End Flow: Outbox -> SQS -> Consumer
+
+Versioning in a system where events flow through an outbox table to SQS and then to consumers. SQS is schema-agnostic — it transports JSON without inspecting it. The version contract is between producer and consumer.
+
+### Flow
+
+```text
+Order Service                Outbox Table                SQS Queue              Email Service
+     │                           │                         │                        │
+     │  Prisma $transaction       │                         │                        │
+     │  write order + event (v2) │                         │                        │
+     │──────────────────────────►│                         │                        │
+     │                           │                         │                        │
+     │                           │  Outbox poller          │                        │
+     │                           │  reads event envelope   │                        │
+     │                           │  (event_type, version,  │                        │
+     │                           │   payload)              │                        │
+     │                           │────────────────────────►│                        │
+     │                           │                         │  SQS Consumer          │
+     │                           │                         │  receives envelope     │
+     │                           │                         │───────────────────────►│
+     │                           │                         │                        │
+     │                           │                         │       check version     │
+     │                           │                         │       if v1: upcast    │
+     │                           │                         │       process payload  │
+```
+
+### Producer — Write to Outbox
+
+The event envelope with `version` is stored alongside the business data in a single Prisma transaction:
+
+```typescript
+async function createOrder(input: CreateOrderInput): Promise<void> {
+  await prisma.$transaction(async (tx) => {
+    // 1. Business data
+    const order = await tx.order.create({ data: { customerId: input.customerId } });
+
+    // 2. Outbox event with version
+    await tx.outboxEvent.create({
+      data: {
+        aggregateType: 'order',
+        aggregateId: order.id,
+        eventType: 'OrderCreated',
+        version: 2,
+        payload: {
+          orderId: order.id,
+          totalAmount: order.totalAmount,
+          discountCode: input.discountCode, // added in v2
+        },
+      },
+    });
+  });
+}
+```
+
+### Outbox Poller — Publish to SQS
+
+The poller reads unprocessed events and publishes the entire envelope to SQS. The envelope includes `version` so the consumer knows how to interpret the payload:
+
+```typescript
+async function publishOutboxEvents(): Promise<void> {
+  const events = await prisma.outboxEvent.findMany({
+    where: { processedAt: null },
+    orderBy: { createdAt: 'asc' },
+    take: 100,
+  });
+
+  for (const event of events) {
+    await sqs.sendMessage({
+      QueueUrl: process.env.SQS_QUEUE_URL!,
+      MessageBody: JSON.stringify({
+        eventType: event.eventType,
+        version: event.version,
+        aggregateId: event.aggregateId,
+        payload: event.payload,
+      }),
+    });
+
+    await prisma.outboxEvent.update({
+      where: { id: event.id },
+      data: { processedAt: new Date() },
+    });
+  }
+}
+```
+
+### Consumer — Receive from SQS, Handle Versioning
+
+The Email Service receives the envelope and decides how to interpret it based on `version`. Two common strategies:
+
+**Tolerant reader** — for backward-compatible changes (new optional fields), ignore unknown fields:
+
+```typescript
+interface EmailNotification {
+  orderId: string;
+  totalAmount: number;
+  // discountCode ignored — Email Service doesn't need it
+}
+
+async function handleSqsMessage(message: SQSMessage): Promise<void> {
+  const raw = JSON.parse(message.Body!);
+  if (raw.eventType !== 'OrderCreated') return;
+
+  const payload = raw.payload as EmailNotification;
+  await sendOrderConfirmation(payload.orderId, payload.totalAmount);
+}
+```
+
+**Upcast function** — for breaking changes (renamed fields), check version and transform:
+
+```typescript
+interface EmailNotification {
+  orderId: string;
+  totalAmount: number;
+}
+
+async function handleSqsMessage(message: SQSMessage): Promise<void> {
+  const raw = JSON.parse(message.Body!);
+  if (raw.eventType !== 'OrderCreated') return;
+
+  const event = upcastOrderCreated(raw.version, raw.payload);
+  await sendOrderConfirmation(event.orderId, event.totalAmount);
+}
+
+function upcastOrderCreated(
+  version: number,
+  payload: Record<string, unknown>
+): EmailNotification {
+  if (version === 1) {
+    return {
+      orderId: payload.orderId as string,
+      totalAmount: payload.totalAmount as number,
+    };
+  }
+  if (version === 2) {
+    // v2 renamed totalAmount -> amount
+    return {
+      orderId: payload.orderId as string,
+      totalAmount: payload.amount as number,
+    };
+  }
+  throw new Error(`Unknown version: ${version}`);
+}
+```
+
+### Idempotency on Top
+
+SQS delivers at-least-once — the same message may arrive multiple times. The consumer adds idempotency before processing:
+
+```typescript
+async function handleSqsMessage(message: SQSMessage): Promise<void> {
+  // Deduplicate by SQS MessageId or a custom idempotency key
+  const existing = await prisma.processedMessage.findUnique({
+    where: { messageId: message.MessageId },
+  });
+  if (existing) return; // already processed
+
+  const raw = JSON.parse(message.Body!);
+  const event = upcastOrderCreated(raw.version, raw.payload);
+
+  await prisma.$transaction(async (tx) => {
+    await tx.processedMessage.create({
+      data: { messageId: message.MessageId! },
+    });
+    await sendOrderConfirmation(event.orderId, event.totalAmount);
+  });
+}
+```
+
+### Key Insight
+
+SQS does not enforce schema — the version contract is **between the producer and the consumer only**. The `version` field in the envelope enables **schema-on-read**: the producer writes whatever payload it wants, and each consumer decides how to interpret it. One producer, many consumers — each can process at their own version tolerance level.
+
+---
+
 ## Advantages
 
 - **Independent deployment** — producers and consumers deploy at different times without coordination
@@ -309,6 +484,7 @@ Popular registries: Confluent Schema Registry (Kafka), AWS Glue Schema Registry,
 - [Event Sourcing](event-sourcing.md) — append-only event store where versioned events are the source of truth
 - [Outbox Pattern](outbox-pattern.md) — publishing versioned events reliably after a database write
 - [Delivery Semantics](delivery-semantics.md) — consumers must handle at-least-once delivery of versioned events
+- [Idempotency](idempotency.md) — deduplicating SQS messages before processing versioned events
 - [CQRS](cqrs.md) — projections build read models from versioned events
 
 ---
