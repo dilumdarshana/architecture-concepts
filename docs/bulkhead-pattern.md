@@ -213,9 +213,9 @@ Without Bulkheads                    With Bulkheads
 ## Related Concepts
 
 - [Circuit Breaker](circuit-breaker.md) — bulkhead prevents resource exhaustion; circuit breaker stops calls to unhealthy services (best used together)
-- [Backpressure](backpressure.md) — bulkhead limits the incoming pressure each dependency can exert
+- [Backpressure](backpressure.md) — bulkhead isolates capacity per dependency so one slow consumer cannot starve others; backpressure propagates capacity constraints upstream
 - [Rate Limiting](rate-limiting.md) — rate limiting protects the system from aggressive clients; bulkhead protects it from slow dependencies
-- [Graceful Shutdown](graceful-shutdown.md) — bulkhead pools should be drained and closed during shutdown
+- [Graceful Shutdown](graceful-shutdown.md) — drain and close each bulkhead pool individually during shutdown so in-flight requests finish before the process exits
 - [Retry Pattern](retry-pattern.md) — retries should respect bulkhead pool limits
 - [Distributed Systems](distributed-systems.md) — bulkhead is a resilience pattern for multi-service architectures
 
