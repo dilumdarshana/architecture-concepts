@@ -198,6 +198,57 @@ app.get('/orders/:id', async (req, res) => {
 });
 ```
 
+### Middleware-Based Abort
+
+A middleware attaches `AbortSignal` to every request so routes get cancellation with zero boilerplate:
+
+```typescript
+// middleware/abortOnDisconnect.ts
+import { Request, Response, NextFunction } from 'express';
+
+declare global {
+  namespace Express {
+    interface Request {
+      signal: AbortSignal;
+    }
+  }
+}
+
+export function abortOnDisconnect(req: Request, res: Response, next: NextFunction) {
+  const controller = new AbortController();
+  req.signal = controller.signal;
+
+  req.on('close', () => {
+    if (req.destroyed) {
+      controller.abort();
+    }
+  });
+
+  next();
+}
+```
+
+Register early in the middleware chain — every downstream route and middleware inherits the signal:
+
+```typescript
+import { abortOnDisconnect } from './middleware/abortOnDisconnect';
+
+app.use(abortOnDisconnect);
+
+// Routes — no per-route boilerplate
+app.get('/orders/:id', async (req, res) => {
+  const order = await fetchOrder(req.params.id, req.signal);
+  res.json(order);
+});
+
+app.post('/charge', async (req, res) => {
+  const result = await chargePayment(req.body, { signal: req.signal });
+  res.json(result);
+});
+```
+
+The signal is automatically garbage-collected after the request completes — no manual teardown. If a client disconnects mid-auth-check or mid-rate-limit, those middleware layers also see the abort.
+
 ---
 
 ## Architecture / Flow

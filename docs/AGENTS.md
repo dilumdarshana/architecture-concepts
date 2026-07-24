@@ -65,10 +65,11 @@ Before writing a new concept, **read all existing concept files** in this folder
 
 1. **No emojis** in content files.
 2. Use `---` horizontal rules between every section.
-3. Code blocks must specify a language (typescript, javascript, text, bash, sql, etc.).
-4. Use `>` for one-line summaries and key takeaways.
-5. Keep descriptions concise — aim for skimmable, not prose.
-6. Prefer tables over bullet lists for structured comparisons.
+3. Code blocks must specify a language (typescript, text, bash, sql, etc.).
+4. All code examples **must** use TypeScript, never plain JavaScript.
+5. Use `>` for one-line summaries and key takeaways.
+6. Keep descriptions concise — aim for skimmable, not prose.
+7. Prefer tables over bullet lists for structured comparisons.
 
 ---
 
