@@ -142,6 +142,86 @@ Producer                        Event Store                     Consumer
 - Only additive changes to optional fields
 - No removals, no renames, no type changes
 
+### Compatibility Examples
+
+**Backward compatible** — new consumer reads old events (adding an optional field):
+
+```typescript
+// v1 event produced by old system
+const v1Event = {
+  orderId: "abc",
+  totalAmount: 100,
+};
+
+// v2 consumer reads both v1 and v2 — safe because the new field is optional
+interface OrderCreatedV2 {
+  orderId: string;
+  totalAmount: number;
+  discountCode?: string;       // new optional field
+}
+
+// Upcast function handles the missing field
+function handleOrderCreated(event: OrderCreatedV2): void {
+  // v1 events have no discountCode — defaults to undefined
+  if (event.discountCode) {
+    applyDiscount(event.discountCode);
+  }
+}
+```
+
+**Forward compatible** — old consumer reads new events (ignoring unknown fields):
+
+```typescript
+// v2 event produced by new system
+const v2Event = {
+  orderId: "abc",
+  totalAmount: 100,
+  discountCode: "WELCOME10",  // new field
+  loyaltyTier: "gold",        // another new field
+};
+
+// v1 consumer reads both v1 and v2 — safe because it ignores unknown fields
+interface OrderCreatedV1 {
+  orderId: string;
+  totalAmount: number;
+  // no discountCode or loyaltyTier — unknown fields are ignored
+}
+
+// Tolerant reader — deserialize only the fields we know
+function parseOrderCreated(raw: Record<string, unknown>): OrderCreatedV1 {
+  return {
+    orderId: String(raw.orderId),
+    totalAmount: Number(raw.totalAmount),
+    // unknown fields (discountCode, loyaltyTier) are silently dropped
+  };
+}
+```
+
+**Breaking change handled via new event type** — renaming a field requires a new type, not a new version:
+
+```typescript
+// Old event — cannot rename `totalAmount` to `amount` in the same type
+interface OrderCreatedV1 {
+  orderId: string;
+  totalAmount: number;
+}
+
+// Instead, create a new event type
+interface OrderCreatedV2 {
+  orderId: string;
+  amount: number;              // renamed from totalAmount
+  discountCode?: string;
+}
+
+// Upcast transforms V1 into V2
+function upcastToV2(event: OrderCreatedV1): OrderCreatedV2 {
+  return {
+    orderId: event.orderId,
+    amount: event.totalAmount,  // map old field to new name
+  };
+}
+```
+
 ---
 
 ## How it Works
