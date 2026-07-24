@@ -134,16 +134,56 @@ app.get('/orders/:id', async (req, res) => {
 });
 ```
 
-### Client Disconnect — Stop Processing
+### Detecting Client Disconnect — Events
 
-Express `req.on('close', ...)` fires when the client disconnects. Combine with `AbortController` to stop processing for abandoned requests:
+Two events detect a client disconnect on the server:
+
+| Event | Fires When | Recommended? |
+|-------|------------|--------------|
+| `req.on('close')` | Underlying connection closes — disconnect, abort, or socket idle timeout | **Yes** — covers all cases |
+| `res.on('close')` | Response stream ends — disconnect OR normal completion | Use with caution; also fires on success |
+| `req.on('aborted')` | Client aborts the request (deprecated in Node 17+) | No — use `close` instead |
+
+The `'close'` event fires on both disconnect AND normal completion. Distinguish by checking `req.destroyed` — `true` when the client disconnected, `false` when the response ended normally.
+
+```typescript
+import { createServer } from 'http';
+import { AbortController } from 'node:abort-controller';
+
+const server = createServer((req, res) => {
+  const controller = new AbortController();
+
+  req.on('close', () => {
+    if (req.destroyed) {            // client disconnected
+      controller.abort();
+    }
+  });
+
+  // ... pass controller.signal to downstream work
+});
+```
+
+For keep-alive connections, the socket idle timeout also triggers `close`. Check `req.complete` to distinguish a partial request (client disconnected mid-body) from a complete one:
+
+```typescript
+req.on('close', () => {
+  if (req.destroyed && !req.complete) {
+    // Client disconnected before sending the full body
+    controller.abort();
+  }
+});
+```
+
+### Client Disconnect — Express
+
+Express exposes the same `req.on('close')` event on its request object. Combine with `AbortController` to cancel downstream work:
 
 ```typescript
 app.get('/orders/:id', async (req, res) => {
   const controller = new AbortController();
 
   req.on('close', () => {
-    if (!res.writableEnded) {
+    if (req.destroyed) {
       controller.abort();
     }
   });
@@ -190,7 +230,7 @@ Client sends request
 2. Pass the `signal` to any async operation that supports it (fetch, streams, event listeners).
 3. Call `controller.abort()` when the operation should be cancelled:
    - On a timeout via `setTimeout`.
-   - On client disconnect via `req.on('close')`.
+   - On client disconnect via `req.on('close')` — check `req.destroyed` to distinguish disconnect from normal completion.
    - On a newer superseding event (e.g. stale search query).
 4. The signal's `aborted` property becomes `true`, and any `'abort'` event listeners fire.
 5. The async operation detects the abort and throws an `AbortError` (or rejects its promise).
@@ -251,4 +291,4 @@ Client sends request
 
 ## Key Takeaways
 
-> `AbortController` provides a standard mechanism to cancel async operations in Node.js. Combine it with `setTimeout` for timeouts or `req.on('close')` for client disconnects. Operations that respect `AbortSignal` (fetch, streams) stop immediately; for others (database queries), implement manual cancellation. Always catch `AbortError` explicitly — it is not an application error and should not propagate to error middleware or crash the process.
+> `AbortController` provides a standard mechanism to cancel async operations in Node.js. Combine it with `setTimeout` for timeouts or `req.on('close')` for client disconnects — check `req.destroyed` to distinguish disconnect from normal completion. Use `req.on('close')` (not the deprecated `'aborted'`) for disconnect detection. Operations that respect `AbortSignal` (fetch, streams) stop immediately; for others (database queries), implement manual cancellation. Always catch `AbortError` explicitly — it is not an application error and should not propagate to error middleware or crash the process.
