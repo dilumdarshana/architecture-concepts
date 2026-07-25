@@ -23,6 +23,7 @@ A library of architectural patterns and design concepts for building distributed
 | Concept | Description |
 |---------|-------------|
 | [Distributed Systems](distributed-systems.md) | Collection of independent services collaborating over a network to function as a single system. |
+| [Microservices](microservices.md) | Independently deployable services, each owning its own data and domain — challenges, communication patterns, and when to use them. |
 | [CAP Theorem](cap-theorem.md) | Consistency, Availability, Partition Tolerance — the fundamental distributed systems trade-off. |
 | [Distributed Transactions](distributed-transactions.md) | Two-Phase Commit and coordination strategies for atomicity across services. |
 | [Delivery Semantics](delivery-semantics.md) | At-most-once, at-least-once, and exactly-once guarantees for message processing. |
