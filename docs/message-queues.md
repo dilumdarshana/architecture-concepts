@@ -145,6 +145,8 @@ Kafka Topics and Partitions
 7. If the consumer crashes, the partition is reassigned to another consumer in the group, which resumes from the last committed offset.
 8. Multiple consumer groups can read the same topic independently — each group gets every message.
 
+For a deeper dive into topics, partitions, offsets, consumer groups, and compaction, see [Kafka Fundamentals](kafka.md).
+
 ### RabbitMQ
 
 1. A **producer** sends a message to an **exchange** with a **routing key**.
@@ -316,7 +318,7 @@ See [Backpressure](backpressure.md) and [Bulkhead Pattern](bulkhead-pattern.md).
 - [Circuit Breaker](circuit-breaker.md) — protect producers from broker unavailability
 - [Distributed Tracing](distributed-tracing.md) — trace messages across producer and consumer boundaries
 - [Claim-Check Pattern](claim-check-pattern.md) — database-backed consumer claiming when a queue is not available
-- Kafka
+- [Kafka](kafka.md)
 - RabbitMQ
 - Amazon SQS / SNS
 - Redis Streams
@@ -328,4 +330,4 @@ See [Backpressure](backpressure.md) and [Bulkhead Pattern](bulkhead-pattern.md).
 
 ## Key Takeaways
 
-> Message queues decouple producers from consumers, enabling asynchronous communication, load leveling, and fault isolation. Kafka is ideal for high-throughput event streaming with replayability. RabbitMQ excels at complex routing (direct, topic, fanout) and traditional message queuing. SQS provides a fully managed, serverless option with FIFO ordering for stricter guarantees. BullMQ (Redis Streams) is the most popular choice in the Node.js ecosystem for its simplicity and built-in retry/backoff. Every queue delivers at-least-once by default — consumers must be idempotent (see [Idempotency](idempotency.md)). Always configure a dead-letter queue to capture permanently failed messages for manual inspection.
+> Message queues decouple producers from consumers, enabling asynchronous communication, load leveling, and fault isolation. [Kafka](kafka.md) is ideal for high-throughput event streaming with replayability. RabbitMQ excels at complex routing (direct, topic, fanout) and traditional message queuing. SQS provides a fully managed, serverless option with FIFO ordering for stricter guarantees. BullMQ (Redis Streams) is the most popular choice in the Node.js ecosystem for its simplicity and built-in retry/backoff. Every queue delivers at-least-once by default — consumers must be idempotent (see [Idempotency](idempotency.md)). Always configure a dead-letter queue to capture permanently failed messages for manual inspection.
