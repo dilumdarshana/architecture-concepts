@@ -1,0 +1,32 @@
+{
+  "name": "express-resilience",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Outbox pattern, idempotency, and retry demo with Express + Prisma + BullMQ",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev"
+  },
+  "packageManager": "pnpm@10.27.0",
+  "pnpm": {
+    "onlyBuiltDependencies": ["@prisma/engines", "prisma", "esbuild", "msgpackr-extract"]
+  },
+  "dependencies": {
+    "@prisma/client": "^7.9.0",
+    "bullmq": "^5.81.2",
+    "express": "^5.2.1",
+    "ioredis": "^5.11.1",
+    "uuid": "^14.0.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.1.1",
+    "@types/uuid": "^11.0.0",
+    "prisma": "^7.9.0",
+    "tsx": "^4.23.1",
+    "typescript": "^7.0.2"
+  }
+}

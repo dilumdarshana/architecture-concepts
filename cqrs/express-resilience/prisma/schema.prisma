@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Order {
+  id         String   @id @default(uuid())
+  customerId String
+  total      Decimal
+  status     String   @default("pending")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model OutboxEvent {
+  id            String   @id @default(uuid())
+  eventType     String
+  aggregateId   String
+  aggregateType String
+  payload       Json
+  version       Int      @default(1)
+  processedAt   DateTime?
+  createdAt     DateTime @default(now())
+
+  @@index([processedAt, createdAt])
+}
+
+model ProcessedMessage {
+  id              String   @id
+  idempotencyKey  String   @unique
+  status          String   @default("completed")
+  processedAt     DateTime @default(now())
+
+  @@index([idempotencyKey])
+}
