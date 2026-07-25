@@ -21,7 +21,7 @@ ACID is the set of guarantees that a reliable transaction must provide:
 | **Isolation** | Concurrent transactions execute as if they were serialized. Intermediate states are invisible to other transactions. |
 | **Durability** | Once committed, the data survives system failures (power loss, crash). |
 
-In practice, databases relax Isolation for performance — the four standard **isolation levels** balance safety against throughput:
+For a detailed exploration of each property, including isolation phenomena and ACID vs BASE, see [ACID Compliance](acid-compliance.md). In practice, databases relax Isolation for performance — the four standard **isolation levels** balance safety against throughput:
 
 | Level | Dirty Read | Non-Repeatable Read | Phantom Read |
 |-------|-----------|---------------------|--------------|
@@ -308,6 +308,7 @@ await prisma.$transaction(async (tx) => {
 
 ## Related Concepts
 
+- [ACID Compliance](acid-compliance.md) — foundational properties that concurrency control mechanisms implement
 - [Concurrency vs Parallelism](concurrency-vs-parallelism.md) — database concurrency control operates at the data level, not the CPU level
 - [Distributed Systems](distributed-systems.md) — distributed transactions and saga coordination
 - [Outbox Pattern](outbox-pattern.md) — uses DB transactions for atomic event publishing

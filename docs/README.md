@@ -62,6 +62,7 @@ A library of architectural patterns and design concepts for building distributed
 
 | Concept | Description |
 |---------|-------------|
+| [ACID Compliance](acid-compliance.md) | Atomicity, Consistency, Isolation, Durability — the four properties that guarantee reliable database transactions. |
 | [Database Concurrency Control](database-concurrency-control.md) | Transactions, atomic operations, optimistic and pessimistic locking for safe concurrent data access. |
 | [Database Migrations](database-migrations.md) | Zero-downtime schema changes using expand-migrate-contract pattern. |
 | [Caching Strategies](caching-strategies.md) | Cache-aside, write-through, write-behind, multi-level caching, invalidation, and stampede prevention. |
