@@ -10,10 +10,10 @@ A **Saga** is an alternative to [Distributed Transactions](distributed-transacti
 
 There are two styles:
 
-| Style | Coordination | Communication | Example |
-|-------|-------------|---------------|---------|
-| **Choreography** | Decentralized — each service publishes events that trigger the next step | Event-driven (message queue) | OrderCreated -> InventoryReserved -> PaymentConfirmed |
-| **Orchestration** | Centralized — an orchestrator tells each service what to do and when | Command-driven (queue or HTTP) | Orchestrator sends "ReserveInventory", waits for reply, then sends "ChargePayment" |
+| Style | Coordination | Communication | Failure Handling | Observability | Coupling |
+|-------|-------------|---------------|-----------------|---------------|----------|
+| **Choreography** | Decentralized — each service decides what to do next | Events (pub/sub, message queue) | Each step publishes failure events; services self-compensate | Requires distributed tracing to follow the flow | Loose — services only know event shapes, not each other |
+| **Orchestration** | Centralized — an orchestrator controls every step | Commands (queue or HTTP request-reply) | Orchestrator drives compensation in reverse order | Single place to log progress, retry, and alert | Tighter — services are called by the orchestrator |
 
 ---
 
@@ -172,7 +172,47 @@ Order Service          Inventory Service       Payment Service
 
 ---
 
-## How it Works
+## Choreography vs Orchestration — Deep Dive
+
+### Which to Choose
+
+| Criterion | Choreography | Orchestration |
+|-----------|--------------|---------------|
+| **Decoupling** | Stronger — services only know event types, not service identities | Weaker — each service knows the orchestrator's command format |
+| **Failure handling** | Implicit — services publish failure events; subscribers compensate independently | Explicit — orchestrator tracks each step outcome and drives compensation |
+| **Observability** | Harder — saga flow is distributed across service logs; requires distributed tracing | Easier — orchestrator logs each step and decision in one place |
+| **Testing** | Harder — end-to-end tests must run all services with a real message queue | Easier — mock the orchestrator's commands and assert step outcomes |
+| **Schema evolution** | Harder — changing event shapes affects all consumers; requires event versioning | Easier — orchestrator owns the workflow; service interfaces are stable commands |
+| **Throughput** | Higher — no central bottleneck; services process events in parallel where possible | Lower — orchestrator is a throughput bottleneck; steps are sequential |
+| **Complexity ceiling** | Lower — each service is simpler; complexity is in the event wiring | Higher — orchestrator becomes complex as workflows grow |
+| **Recovery** | Harder — mid-saga state is distributed across services; no single source of truth | Easier — orchestrator persists saga state in its own database; resume on restart |
+
+### Hybrid Approach
+
+Many production systems use both. The order creation flow might be orchestrated (the orchestrator drives a clear sequence: reserve → charge → confirm), while downstream effects (notifications, analytics, invoice generation) use choreography — they subscribe to events but the orchestrator does not wait for them:
+
+```text
+Orchestrator drives:           Choreography fans out:
+  reserveInventory               email notification (fire and forget)
+  chargePayment                  analytics event (fire and forget)
+  confirmOrder                   invoice generation (fire and forget)
+```
+
+This gives you the **observability and recoverability** of orchestration for the critical path and the **decoupling and scalability** of choreography for side effects.
+
+### Decision Flow
+
+```text
+Do I need a clear, observable workflow?
+  ├── Yes ──► Do steps depend on each other's outcomes?
+  │            ├── Yes ──► Orchestration (e.g., reserve before charge)
+  │            └── No  ──► Choreography (e.g., parallel notifications)
+  └── No  ──► Can I tolerate eventual consistency?
+               ├── Yes ──► Choreography (simpler, more decoupled)
+               └── No  ──► Consider Distributed Transactions (2PC)
+```
+
+---
 
 1. The saga begins with a local transaction on the initiating service (e.g. create order with `status: pending`).
 2. On success, the service publishes an event (choreography) or sends a command (orchestration) for the next step.
@@ -199,13 +239,14 @@ Order Service          Inventory Service       Payment Service
 
 ## Trade-offs
 
-| Trade-off | Impact |
-|-----------|--------|
-| **Eventual consistency** — there is a window between steps where the system is partially committed | Downstream services see intermediate states (pending orders, temporary reservations) |
-| **Compensation complexity** — compensating actions must be idempotent and correctly reverse each step | Not all operations are easily reversible (e.g. "send email" has no meaningful compensation) |
-| **Orchestrator SPOF** — in orchestration style, the orchestrator is a single point of failure | Requires its own persistence and recovery mechanism |
-| **Choreography coupling** — services implicitly know about each other's events | Evolving event schemas can break downstream consumers |
-| **Debugging difficulty** — a saga spans multiple services and databases | Requires distributed tracing to follow the full flow |
+| Trade-off | Impact | Affects |
+|-----------|--------|---------|
+| **Eventual consistency** — there is a window between steps where the system is partially committed | Downstream services see intermediate states (pending orders, temporary reservations) | Both |
+| **Compensation complexity** — compensating actions must be idempotent and correctly reverse each step | Not all operations are easily reversible (e.g. "send email" has no meaningful compensation) | Both |
+| **Orchestrator SPOF** — the orchestrator is a single point of failure | Requires its own persistence and recovery mechanism | Orchestration |
+| **Choreography coupling** — services implicitly depend on event schemas | Evolving event schemas can break downstream consumers; requires event versioning | Choreography |
+| **Debugging difficulty** — a saga spans multiple services and databases | Requires distributed tracing to follow the full flow | Choreography (harder) / Orchestration (easier with logs) |
+| **Orchestrator complexity** — the orchestrator must track state, handle retries, and manage timeouts | Becomes a significant codebase as workflows grow | Orchestration |
 
 ---
 
@@ -234,12 +275,11 @@ Order Service          Inventory Service       Payment Service
 - [Distributed Systems](distributed-systems.md) — saga coordinates independent services in a distributed architecture
 - [Idempotency](idempotency.md) — compensating actions and step retries must be idempotent
 - [Promise APIs](promise-apis.md) — orchestration can use `Promise.allSettled` to collect step outcomes
-- Choreography vs Orchestration
+- [Event-Driven Architecture](event-driven-architecture.md) — choreography style is fundamentally event-driven
 - Compensating Transaction
-- [Event-Driven Architecture](event-driven-architecture.md)
 
 ---
 
 ## Key Takeaways
 
-> A Saga coordinates a multi-service workflow through a sequence of local transactions, each with a compensating action to undo it on failure. It avoids distributed locks and 2PC at the cost of eventual consistency. Choreography (event-driven) is decentralized and scales well; orchestration (command-driven) provides clearer control and observability. Reliable event delivery via the Outbox Pattern and idempotent handlers are essential for saga correctness.
+> A Saga coordinates a multi-service workflow through a sequence of local transactions, each with a compensating action to undo it on failure. It avoids distributed locks and 2PC at the cost of eventual consistency. Choreography (event-driven) is decentralized and scales well but is harder to observe and debug. Orchestration (command-driven) provides a single source of truth for workflow state with easier failure handling but introduces a central bottleneck. Use orchestration for the critical path (reserve → charge → confirm) and choreography for side effects (notifications, analytics). Reliable event delivery via the Outbox Pattern and idempotent handlers are essential for both styles.
