@@ -31,6 +31,7 @@ A collection of architectural patterns, technologies, and design concepts — ea
 |---------|-------------|
 | [Event-Driven Architecture](event-driven-architecture.md) | Loose coupling through event production and consumption across services. |
 | [Message Queues](message-queues.md) | Kafka, RabbitMQ, SQS, and BullMQ — topologies, ordering, consumer groups, dead-letter queues. |
+| [Kafka Fundamentals](kafka.md) | Distributed commit log — topics, partitions, consumer groups, offsets, retention, compaction, delivery semantics. |
 | [Outbox Pattern](outbox-pattern.md) | Ensures reliable event delivery by writing events to a DB table within the same transaction as business data. |
 | [Saga Pattern](saga-pattern.md) | Sequence of local transactions with compensating actions for multi-service workflows. |
 | [CQRS](cqrs.md) | Separating read and write models for independent optimisation and scaling. |
