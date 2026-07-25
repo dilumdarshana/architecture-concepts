@@ -89,7 +89,7 @@ async function createOrderWithInventory() {
 
 ## Architecture / Flow
 
-### Two-Phase Commit (2PC)
+### Two-Phase Commit (2PC) — Happy Path
 
 ```text
            Transaction Manager (Coordinator)
@@ -103,13 +103,41 @@ async function createOrderWithInventory() {
     ─────────────────────────
     TM ── prepare? ───► A ──► yes ──► TM
     TM ── prepare? ───► B ──► yes ──► TM
-    TM ── prepare? ───► C ──► no  ──► TM
+    TM ── prepare? ───► C ──► yes ──► TM
 
-    Phase 2 — Commit or Abort
-    ─────────────────────────
-    TM ── abort ──────► A (rollback)
-    TM ── abort ──────► B (rollback)
-    TM ── abort ──────► C (already rolled back)
+    Phase 2 — Commit
+    ─────────────────
+    TM ── commit ────► A ──► ack ──► TM
+    TM ── commit ────► B ──► ack ──► TM
+    TM ── commit ────► C ──► ack ──► TM
+```
+
+### Two-Phase Commit (2PC) — Coordinator Crash (Blocking Problem)
+
+```text
+           Transaction Manager (Coordinator)
+                     │
+         ┌───────────┼───────────┐
+         ▼           ▼           ▼
+    Service A    Service B    Service C
+    (Database)   (Database)   (Database)
+
+    Phase 1 — Prepare
+    ─────────────────
+    TM sends prepare to A, B, C
+    A votes yes, B votes yes, C votes yes
+
+    ⚠ Coordinator CRASHES after receiving all votes
+      but before sending the commit decision
+
+    Result:
+    A: Prepared — holds locks, waiting for decision
+    B: Prepared — holds locks, waiting for decision
+    C: Prepared — holds locks, waiting for decision
+
+    All three services are in-doubt.
+    Locks are held until the coordinator recovers.
+    This is why 2PC is a blocking protocol.
 ```
 
 ### Coordination Strategies
@@ -127,11 +155,42 @@ async function createOrderWithInventory() {
 ## How it Works
 
 1. Application begins a distributed transaction via the coordinator.
-2. **Phase 1 (Prepare)** — The coordinator sends a `prepare` request to every participant. Each participant executes the transaction locally, acquires necessary locks, and votes "yes" (ready to commit) or "no" (cannot commit).
-3. If any participant votes "no," the coordinator decides to abort — Phase 2 becomes a rollback.
-4. If all participants vote "yes," the coordinator decides to commit — Phase 2 becomes a commit.
-5. **Phase 2 (Commit/Abort)** — The coordinator sends the decision to all participants. Each participant either commits or rolls back and acknowledges.
-6. The coordinator records the outcome in its transaction log for recovery in case of failure.
+2. **Phase 1 (Prepare)** — The coordinator sends a `prepare` request to every participant. Each participant executes the transaction locally, acquires the necessary locks, writes the transaction to its own write-ahead log, and votes "yes" (ready to commit) or "no" (cannot commit). A "yes" vote is a promise: the participant **will** commit if told to.
+3. If any participant votes "no," the coordinator decides to abort — Phase 2 sends `rollback` to all participants, which release locks and discard their prepared state.
+4. If all participants vote "yes," the coordinator commits its decision to its own **transaction log** (durable storage), then sends `commit` to all participants in Phase 2.
+5. Each participant commits, records the commit in its log, releases locks, and sends an acknowledgment back to the coordinator.
+6. The coordinator marks the transaction as complete after receiving all acknowledgments.
+
+### The Blocking Problem
+
+2PC is a **blocking protocol** — once a participant votes "yes," it holds locks and blocks other work until the coordinator delivers a decision. If the coordinator crashes between Phase 1 and Phase 2 (after receiving all "yes" votes but before sending `commit`):
+
+- Every participant is **in-doubt** — they have prepared the transaction but do not know the outcome.
+- Locks remain held, blocking other transactions against the same data.
+- No participant can unilaterally decide to commit or rollback without risking a split-brain outcome.
+- The system is stuck until the coordinator recovers.
+
+### Coordinator Recovery
+
+The coordinator writes each state transition to a durable transaction log:
+
+```text
+Transaction T1: PREPARE_SENT    → written before Phase 1
+                 ALL_VOTES_IN   → written after all votes received
+                 COMMIT_DECIDED → written before Phase 2 commit
+                 COMPLETED      → written after all acknowledgments
+```
+
+On recovery:
+- If the last logged state is `PREPARE_SENT` — the coordinator knows Phase 1 was sent but has incomplete votes. It assumes the transaction failed and sends `rollback` to all participants.
+- If the last logged state is `ALL_VOTES_IN` — the coordinator knows all votes were received. It checks the decision (commit or abort, persisted alongside this state) and resumes Phase 2.
+- If the last logged state is `COMMIT_DECIDED` — the coordinator resends `commit` to all participants. Participants that already committed will acknowledge; participants still in-doubt will commit.
+
+If the coordinator cannot recover (permanent failure), participants remain in-doubt indefinitely unless an administrator manually resolves them.
+
+### Heuristic Decisions
+
+When a participant remains in-doubt for too long and cannot reach the coordinator, it may make a **heuristic decision** — unilaterally committing or rolling back the transaction. This breaks atomicity: one participant may commit while another rolls back, leaving the system inconsistent. Heuristic decisions are a last resort, logged explicitly, and require manual reconciliation.
 
 ---
 
@@ -157,6 +216,36 @@ async function createOrderWithInventory() {
 
 ---
 
+## 2PC in Practice
+
+Distributed transactions via 2PC are rare in modern microservices, but they exist in specific infrastructure layers:
+
+| Technology | How 2PC is Used |
+|------------|-----------------|
+| **PostgreSQL** | `PREPARE TRANSACTION` + `COMMIT PREPARED` / `ROLLBACK PREPARED` enables 2PC. Used in PgBouncer transaction pooling and some application-level coordinators. |
+| **MySQL XA** | `XA START`, `XA END`, `XA PREPARE`, `XA COMMIT` / `XA ROLLBACK` — supports 2PC across multiple MySQL instances. Used with Distributed Transaction Coordinator (DTC) on Windows. |
+| **RabbitMQ** | Supports XA transactions — publishes and acks are atomic across queues. Rarely used in practice due to high overhead. |
+| **Apache Kafka** | Exactly-once semantics uses a 2PC-like protocol between the producer, broker, and transaction coordinator for atomic writes across partitions. |
+| **JTA / Jakarta Transactions** | Java EE's standard for distributed transactions across databases and message brokers (JMS). Behind the scenes, it uses XA-compliant resource managers. |
+| **Microsoft DTC** | Distributed Transaction Coordinator — coordinates 2PC across SQL Server, MSMQ, and other COM+ resources. |
+
+In most Node.js applications, you will not implement 2PC directly — you will instead use the patterns in the comparison below.
+
+## 2PC vs Saga — When Each Fits
+
+| Aspect | 2PC | Saga |
+|--------|-----|------|
+| **Coordination** | Central coordinator drives prepare → commit/abort | Choreography (events) or orchestrator drives local transactions |
+| **Consistency** | Strong (ACID) — all or nothing | Eventual — each step commits locally, compensating actions unwind on failure |
+| **Locking** | Holds locks from prepare until commit — seconds max | No distributed locks — each local transaction commits immediately |
+| **Latency** | All participants must respond before any commits | Steps execute sequentially; each commits before the next starts |
+| **Failure handling** | Protocol handles it — rollback all participants | Developer writes compensating actions for each step |
+| **Data visibility** | Uncommitted data is invisible (isolation) | Each step's data is visible as soon as it commits |
+| **Scale** | 3-5 participants max; coordination overhead grows with N | Works with dozens of participants; no central bottleneck |
+| **Typical duration** | Milliseconds to seconds | Seconds to hours |
+
+---
+
 ## When to Use
 
 - Financial systems that require strong consistency across multiple databases (ledger + payments)
@@ -178,11 +267,12 @@ async function createOrderWithInventory() {
 
 ## Related Concepts
 
+- [ACID Compliance](acid-compliance.md) — the four properties that distributed transactions preserve across participants
 - [Distributed Systems](distributed-systems.md) — distributed transactions are a coordination strategy for multi-service systems
 - [Database Concurrency Control](database-concurrency-control.md) — ACID, locking, and isolation levels at the single-node level
 - [Outbox Pattern](outbox-pattern.md) — alternative for event delivery that avoids distributed transactions
 - [Saga Pattern](saga-pattern.md) — compensation-based alternative for long-running business workflows
-- [CAP Theorem](cap-theorem.md)
+- [CAP Theorem](cap-theorem.md) — distributed transactions trade availability for consistency
 - Two-Phase Commit (2PC)
 - Three-Phase Commit (3PC)
 - XA Standard
