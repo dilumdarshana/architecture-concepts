@@ -36,6 +36,7 @@ A collection of architectural patterns, technologies, and design concepts — ea
 | [CQRS](cqrs.md) | Separating read and write models for independent optimisation and scaling. |
 | [Event Sourcing](event-sourcing.md) | Append-only event store as source of truth with replayable projections. |
 | [Event Versioning](event-versioning.md) | Strategies for evolving event schemas without breaking existing consumers or producers. |
+| [Polling Strategies](polling-strategies.md) | Short and long polling for consuming messages and real-time data — SQS, outbox pollers, HTTP long poll. |
 
 ### Resilience & Reliability
 
