@@ -1,17 +1,22 @@
 # Architecture Concepts
 
-A collection of architectural patterns, technologies, and design concepts — each documented with a consistent structure for quick understanding and interview preparation.
+A library of architectural patterns and design concepts for building distributed systems — each documented with practical examples, trade-offs, and decision criteria. Also structured for interview preparation with a progressive study roadmap.
+
+**How to use this library:**
+- **Designing a system** — browse by category below. Each doc covers the problem, solution, trade-offs, and when to use it.
+- **Preparing for an interview** — follow the [Interview Study Roadmap](interview-study-roadmap.md) for a progressive 9-phase path from Node.js fundamentals to distributed event-driven systems, or the [2-Day Study Plan](2-day-study-plan.md) for intensive last-minute prep.
 
 ---
 
 ## Index
 
-### Study Plans
+### Orientation
 
-| Plan | Description |
-|------|-------------|
-| [Interview Study Roadmap](interview-study-roadmap.md) | Progressive learning path from Node.js fundamentals to distributed event-driven systems — 9 phases, 36 steps. |
-| [2-Day Study Plan](2-day-study-plan.md) | Intensive 2-day interview prep covering runtime, data, events, resilience, operations, testing, and capstone walkthrough. |
+| Guide | Description |
+|-------|-------------|
+| [Interview Study Roadmap](interview-study-roadmap.md) | Progressive 9-phase learning path from Node.js fundamentals to distributed event-driven systems — 36 steps, interview checkpoints, and mock question references. |
+| [2-Day Study Plan](2-day-study-plan.md) | Intensive 2-day prep covering runtime, data, events, resilience, operations, testing, and capstone walkthrough. |
+| [Practical Project](practical-project.md) | Reference e-commerce architecture applying all patterns in a real distributed system — follow the Place Order flow to see each concept in action. |
 
 ### Distributed Systems Fundamentals
 
@@ -95,13 +100,6 @@ A collection of architectural patterns, technologies, and design concepts — ea
 | Concept | Description |
 |---------|-------------|
 | [Testing Event-Driven Systems](testing-event-driven-systems.md) | Unit, integration, and contract testing strategies for handlers, projections, idempotency, and outbox. |
-
-### Reference Architecture
-
-| Concept | Description |
-|---------|-------------|
-| [Practical Project](practical-project.md) | Reference e-commerce architecture applying all patterns in a real distributed system. |
-| [Interview Study Roadmap](interview-study-roadmap.md) | Progressive learning path from Node.js fundamentals to distributed event-driven systems. |
 
 ---
 
