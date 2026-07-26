@@ -14,13 +14,19 @@ async function main() {
   await prisma.$connect();
   console.log('Database connected');
 
+  // Start the BullMQ worker (pulls jobs from Redis and processes them)
   await startWorker();
+
+  // Start the outbox poller (reads unprocessed OutboxEvent rows
+  // and publishes them to BullMQ on a 2-second interval)
   startOutboxPoller();
 
   const server = app.listen(PORT, () => {
     console.log(`Server listening on :${PORT}`);
   });
 
+  // Graceful shutdown: stop accepting new requests, drain the poller,
+  // let the worker finish its current jobs, then close DB connections.
   const shutdown = async (signal: string) => {
     console.log(`\n${signal} received — shutting down...`);
 

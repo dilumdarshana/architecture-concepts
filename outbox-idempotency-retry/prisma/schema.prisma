@@ -6,6 +6,8 @@ datasource db {
   provider = "postgresql"
 }
 
+// Business entity — created inside an atomic Prisma $transaction
+// alongside its OutboxEvent. The consumer flips status to "confirmed".
 model Order {
   id         String   @id @default(uuid())
   customerId String
@@ -15,6 +17,10 @@ model Order {
   updatedAt  DateTime @updatedAt
 }
 
+// Outbox table: events are inserted in the same DB transaction as
+// the business write. A separate poller reads unprocessed rows
+// (processedAt is null) and publishes them to BullMQ, then marks
+// them as sent. This avoids dual-write problems (DB + queue).
 model OutboxEvent {
   id            String   @id @default(uuid())
   eventType     String
@@ -28,11 +34,25 @@ model OutboxEvent {
   @@index([processedAt, createdAt])
 }
 
+// Idempotency table: the consumer records every successfully
+// processed job by its BullMQ jobId. If the same jobId arrives
+// again (e.g. due to at-least-once delivery), it's skipped.
 model ProcessedMessage {
-  id              String   @id
-  idempotencyKey  String   @unique
-  status          String   @default("completed")
-  processedAt     DateTime @default(now())
+  id             String   @id
+  idempotencyKey String   @unique
+  status         String   @default("completed")
+  processedAt    DateTime @default(now())
 
   @@index([idempotencyKey])
+}
+
+// HTTP-layer idempotency: prevents duplicate order creation when
+// the client retries the same POST request. The Idempotency-Key
+// header value is the primary key. The bodyHash (SHA-256 of the
+// raw request body) catches key reuse with a different payload.
+model IdempotencyRequest {
+  key        String   @id
+  bodyHash   String
+  response   Json
+  createdAt  DateTime @default(now())
 }
