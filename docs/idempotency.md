@@ -270,6 +270,7 @@ CREATE INDEX idx_idempotency_keys_created_at
 - Circuit Breaker
 - Exactly-Once Delivery
 - UUID
+- [Outbox + Idempotency + Retry Demo](../outbox-idempotency-retry) — Express + Prisma + BullMQ implementation combining HTTP idempotency (Idempotency-Key header) with message-level deduplication
 
 ---
 

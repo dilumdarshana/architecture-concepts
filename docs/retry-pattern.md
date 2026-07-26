@@ -220,6 +220,7 @@ Caller                     Retry Logic                 Downstream
 - [Delivery Semantics](delivery-semantics.md) — retries enable at-least-once delivery
 - [Claim-Check Pattern](claim-check-pattern.md) — database-level retry for consumer claims
 - Dead Letter Queue — stores permanently failed messages for manual inspection
+- [Outbox + Idempotency + Retry Demo](../outbox-idempotency-retry) — Express + Prisma + BullMQ implementation with exponential-backoff retry (3 attempts, 2s initial delay)
 
 ---
 

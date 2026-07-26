@@ -318,6 +318,7 @@ Shutdown Sequence:
 - Kubernetes Pod Lifecycle
 - OS Signals
 - [Event Loop](event-loop.md)
+- [Outbox + Idempotency + Retry Demo](../outbox-idempotency-retry) — Express + Prisma + BullMQ implementation with SIGINT/SIGTERM graceful shutdown
 
 ---
 

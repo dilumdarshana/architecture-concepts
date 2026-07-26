@@ -187,6 +187,7 @@ Two common publisher implementations:
 - Idempotency
 - [Event Sourcing](event-sourcing.md)
 - [Distributed Systems](distributed-systems.md)
+- [Outbox + Idempotency + Retry Demo](../outbox-idempotency-retry) — Express + Prisma + BullMQ implementation combining all three patterns
 
 ---
 

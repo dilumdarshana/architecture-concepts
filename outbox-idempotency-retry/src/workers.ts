@@ -2,6 +2,8 @@ import { createWorker } from './queue';
 import { processOrder } from './services/orderProcessor';
 import { prisma } from './db';
 
+// The singleton BullMQ worker. created here so start/stop and event
+// handlers all share the same instance.
 const worker = createWorker(async (job) => {
   await processOrder(job);
 });
