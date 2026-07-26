@@ -8,7 +8,8 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "db:generate": "dotenv -e .env -- prisma generate",
-    "db:migrate": "dotenv -e .env -- prisma migrate dev"
+    "db:migrate": "dotenv -e .env -- prisma migrate dev",
+    "prisma:studio": "pnpm exec dotenv -e .env -- prisma studio"
   },
   "packageManager": "pnpm@10.27.0",
   "pnpm": {
@@ -20,6 +21,8 @@
     ]
   },
   "dependencies": {
+    "@bull-board/api": "^8.3.0",
+    "@bull-board/express": "^8.3.0",
     "@prisma/adapter-pg": "^7.9.0",
     "@prisma/client": "^7.9.0",
     "bullmq": "^5.81.2",

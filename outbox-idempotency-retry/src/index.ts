@@ -1,10 +1,24 @@
 import express from 'express';
+import { createBullBoard } from '@bull-board/api';
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
+import { ExpressAdapter } from '@bull-board/express';
 import ordersRouter from './routes/orders';
 import { startOutboxPoller, stopOutboxPoller } from './services/outboxPoller';
 import { startWorker, stopWorker } from './workers';
+import { orderQueue } from './queue';
 import { prisma } from './db';
 
 const app = express();
+
+// Bull Board — web UI for inspecting queues (http://localhost:4000/admin/queues)
+const serverAdapter = new ExpressAdapter();
+serverAdapter.setBasePath('/admin/queues');
+createBullBoard({
+  queues: [new BullMQAdapter(orderQueue)],
+  serverAdapter,
+});
+
+app.use('/admin/queues', serverAdapter.getRouter());
 app.use(express.json());
 app.use('/api', ordersRouter);
 

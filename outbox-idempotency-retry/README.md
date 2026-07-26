@@ -75,6 +75,23 @@ pnpm db:migrate
 pnpm dev
 ```
 
+### Browse Data (GUI)
+
+```bash
+pnpm prisma:studio
+```
+
+Opens Prisma Studio at `http://localhost:5555` — browse, filter, and edit tables (Order, OutboxEvent, ProcessedMessage, IdempotencyRequest) without writing SQL.
+
+### Queue Dashboard (GUI)
+
+```bash
+# Just start the server — Bull Board is mounted at /admin/queues
+pnpm dev
+```
+
+Open `http://localhost:4000/admin/queues` — view the `process-order` queue, inspect jobs by status (waiting, active, completed, failed), retry failed jobs, and examine job payloads.
+
 ### Test
 
 ```bash

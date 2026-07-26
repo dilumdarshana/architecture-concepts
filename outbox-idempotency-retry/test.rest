@@ -1,3 +1,6 @@
+### Bull Board — http://localhost:4000/admin/queues
+# Open in browser to inspect the process-order queue, retry failed jobs, etc.
+
 ### Create an order — triggers outbox → queue → idempotent worker flow
 POST http://localhost:4000/api/orders
 Content-Type: application/json
