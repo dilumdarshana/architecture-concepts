@@ -4,7 +4,7 @@
   "private": true,
   "description": "Outbox pattern, idempotency, and retry demo with Express + Prisma + BullMQ",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "dotenv -e .env -- tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
     "db:generate": "dotenv -e .env -- prisma generate",
@@ -20,15 +20,18 @@
     ]
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.9.0",
     "@prisma/client": "^7.9.0",
     "bullmq": "^5.81.2",
     "express": "^5.2.1",
     "ioredis": "^5.11.1",
+    "pg": "^8.22.0",
     "uuid": "^14.0.1"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^26.1.1",
+    "@types/pg": "^8.20.0",
     "@types/uuid": "^11.0.0",
     "dotenv-cli": "^11.0.0",
     "prisma": "^7.9.0",
