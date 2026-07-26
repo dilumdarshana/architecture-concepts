@@ -4,6 +4,7 @@
   "private": true,
   "description": "Outbox pattern, idempotency, and retry demo with Express + Prisma + BullMQ",
   "scripts": {
+    "postinstall": "dotenv -e .env -- prisma generate",
     "dev": "dotenv -e .env -- tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
