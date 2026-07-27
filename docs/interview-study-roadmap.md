@@ -311,6 +311,15 @@ Mostly overlaps with Set 1 and Set 2. Two new angles: lock expiry + durable idem
 | 7 | Which process signals/events, what steps (stop pulling, drain tasks, close connections)? | (see Set 1 Q7) | Same as Set 1 Q7 |
 | 8 | How do you prevent the event loop from being blocked by CPU-heavy work in an HTTP/API service? | (see Set 2 Q3) | Same as Set 2 Q3 |
 
+### Set 4 — Migration Locking & Schema Version Concurrency
+
+Two questions on coordinating schema changes and concurrent record migration across multiple Node.js instances.
+
+| # | Question | Key Concepts | Docs to Study |
+|---|----------|--------------|---------------|
+| 1 | "Good—tracking applied migrations and using locking is a pragmatic way to keep migrations idempotent and coordinated across instances. In Node.js, what locking strategy would you use to ensure only one instance migrates a given document at a time (e.g., DB-level conditional update, Redis lock, advisory lock), and why?" | Advisory lock (`pg_advisory_lock`) ties to the DB transaction (auto-released on disconnect). Redis lock (`SET NX + TTL`) works across tech stacks but needs manual cleanup. DB conditional update (`UPDATE ... WHERE migrated = false`) is simplest when all instances share the same DB. Trade-offs: advisory lock is safest for DB-bound work; Redis lock is better when multiple services coordinate | [Database Migrations](database-migrations.md), [Distributed Lock](distributed-lock.md), [Database Concurrency Control](database-concurrency-control.md) |
+| 2 | "Understood. Say you have 3 Node.js servers running. Two of them read the same record with schemaVersion: 1 at nearly the same time, and both try to migrate it to version 2 and write it back. Without coordination, you could overwrite each other's changes or waste work. How would you prevent that—what specific locking or 'only update if version is still 1' mechanism would you use, and where would it live (database vs Redis vs in-process)?" | Optimistic locking: `UPDATE ... WHERE schemaVersion = 1` — only the first write succeeds; the second gets 0 rows affected and retries. Lives in the database (the single source of truth). PostgreSQL advisory lock for claiming the migration task. In-process is useless (3 separate processes). Redis lock adds latency vs DB-native check | [Database Concurrency Control](database-concurrency-control.md), [Distributed Lock](distributed-lock.md) |
+
 ### Focus Areas
 
 The questions cluster around key docs — prioritise these for polish:
@@ -325,7 +334,9 @@ The questions cluster around key docs — prioritise these for polish:
 - **[Error Handling (Express)](error-handling.md)** — Set 2 Q17. asyncHandler, centralized error middleware.
 - **[Cancellation & Timeouts](cancellation-timeouts.md)** — Set 2 Q5. AbortController, cleanup on abort.
 - **[Claim-Check Pattern](claim-check-pattern.md)** — Set 3 Q5. Row-level locking for exactly-once consumer processing.
-- **[Distributed Lock](distributed-lock.md)** — Set 3 Q2. Lock as first line of defence, idempotency store as second.
+- **[Distributed Lock](distributed-lock.md)** — Set 3 Q2, Set 4 Q1, Q2. Lock as first line of defence, idempotency store as second. Migration locking strategies: advisory lock (`pg_advisory_lock`) vs Redis lock (`SET NX + TTL`) vs conditional update.
+- **[Database Migrations](database-migrations.md)** — Set 4 Q1. Migration locking strategies, advisory lock vs Redis lock vs conditional update.
+- **[Database Concurrency Control](database-concurrency-control.md)** — Set 4 Q2. Optimistic locking with version check (`UPDATE ... WHERE version = :expected`), lost-update prevention across instances.
 
 Each of these docs has an **Interview Checkpoint** in its phase above and a **Key Takeaways** section — recite those aloud until fluent. Focus especially on the docs that appear across multiple question sets (Idempotency, Database Concurrency Control, Concurrency vs Parallelism).
 
