@@ -29,6 +29,8 @@ A library of architectural patterns and design concepts for building distributed
 | [Delivery Semantics](delivery-semantics.md) | At-most-once, at-least-once, and exactly-once guarantees for message processing. |
 | [Consistency Models](consistency-models.md) | Strong, eventual, causal, and other consistency guarantees for distributed data stores. |
 | [Consensus Algorithms](consensus-algorithms.md) | Raft, Paxos, and how distributed nodes agree on a single value despite failures. |
+| [REST](rest.md) | Resource-oriented API style using standard HTTP methods, status codes, and stateless operations. |
+| [GraphQL](graphql.md) | Client-driven query language that lets clients request exactly the data they need from a single endpoint. |
 | [gRPC](grpc.md) | High-performance RPC using Protocol Buffers and HTTP/2 for typed, streaming inter-service communication. |
 
 ### Event-Driven Architecture

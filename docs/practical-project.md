@@ -84,6 +84,7 @@ Each architectural pattern maps to a specific problem area:
 | Message Queue (BullMQ) | Async communication between services via Redis |
 | [Message Queues](message-queues.md) | BullMQ for order processing; SQS for cross-region event delivery; DLQ for permanently failed payment jobs |
 | [gRPC](grpc.md) | Inter-service RPC for typed, streaming communication (alternative to REST for synchronous calls) |
+| [GraphQL](graphql.md) | API Gateway optionally exposes a GraphQL endpoint for flexible client-driven queries |
 | API Gateway | Single entry point with routing, auth, rate limiting |
 | [Distributed Tracing](distributed-tracing.md) | OpenTelemetry traces every request across all services, correlated by trace ID |
 | [Leader Election](leader-election.md) | Singleton batch job coordinator (report generation, cache warming) |
@@ -281,7 +282,7 @@ async function chargeCustomer(
 
 | Layer | Technology |
 |-------|-----------|
-| HTTP Framework | Express (REST), gRPC (internal RPC) |
+| HTTP Framework | Express (REST), Apollo Server (GraphQL), gRPC (internal RPC) |
 | ORM | Prisma |
 | Database | PostgreSQL (per service) |
 | Message Queue | BullMQ (Redis) |

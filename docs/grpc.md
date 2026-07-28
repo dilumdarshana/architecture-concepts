@@ -180,8 +180,8 @@ Network            TCP
 
 ## When NOT to Use
 
-- **Public-facing APIs consumed by browsers** — REST or GraphQL with JSON is simpler for web clients
-- **Simple CRUD services** — REST is easier to document, test, and debug for straightforward data operations
+- **Public-facing APIs consumed by browsers** — [REST](rest.md) or [GraphQL](graphql.md) with JSON is simpler for web clients
+- **Simple CRUD services** — [REST](rest.md) is easier to document, test, and debug for straightforward data operations
 - **Low-throughput, small teams** — the protobuf toolchain and HTTP/2 overhead are not justified
 - **Teams unfamiliar with protobuf** — field numbering, backward compatibility, and codegen add friction
 
@@ -190,6 +190,8 @@ Network            TCP
 ## Related Concepts
 
 - [Distributed Systems](distributed-systems.md) — gRPC is a common synchronous communication mechanism between distributed services
+- [REST](rest.md) — resource-oriented API style; gRPC is an alternative for high-performance typed communication
+- [GraphQL](graphql.md) — client-driven query language; gRPC is an alternative for typed server-to-server RPC
 - [Message Queues](message-queues.md) — gRPC for request-reply; message queues for async pub/sub; they complement each other
 - [Circuit Breaker](circuit-breaker.md) — `gRPC calls are synchronous and fail-prone; wrap them with a circuit breaker for resilience
 - [Event-Driven Architecture](event-driven-architecture.md) — gRPC streaming enables event-driven patterns within a single connection; EDA extends it across services
@@ -199,4 +201,4 @@ Network            TCP
 
 ## Key Takeaways
 
-> gRPC uses Protocol Buffers and HTTP/2 to provide a high-performance, strongly typed RPC framework with four communication patterns: unary, server streaming, client streaming, and bidirectional. The `.proto` file is the single source of truth — code generation produces type-safe clients in any supported language. gRPC is ideal for internal microservices communication, especially in polyglot or high-throughput environments. For browser-facing APIs, REST or GraphQL are simpler alternatives. Always pair gRPC with a circuit breaker and service discovery for production reliability.
+> gRPC uses Protocol Buffers and HTTP/2 to provide a high-performance, strongly typed RPC framework with four communication patterns: unary, server streaming, client streaming, and bidirectional. The `.proto` file is the single source of truth — code generation produces type-safe clients in any supported language. gRPC is ideal for internal microservices communication, especially in polyglot or high-throughput environments. For browser-facing APIs, [REST](rest.md) or [GraphQL](graphql.md) are simpler alternatives. Always pair gRPC with a circuit breaker and service discovery for production reliability.

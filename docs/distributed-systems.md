@@ -221,7 +221,7 @@ Start with a monolith unless there is a clear need for distribution.
 
 ### Common Technologies
 
-**Communication:** REST, gRPC, GraphQL
+**Communication:** [REST](rest.md), [gRPC](grpc.md), [GraphQL](graphql.md)
 
 **Messaging:** Amazon SQS, Apache Kafka, RabbitMQ
 

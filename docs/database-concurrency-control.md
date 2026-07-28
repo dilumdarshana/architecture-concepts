@@ -122,23 +122,62 @@ await prisma.$transaction(async (tx) => {
 Uses a version number to detect conflicts at write time instead of locking:
 
 ```typescript
-async function reserveInventory(productId: string, quantity: number) {
-  const item = await prisma.inventory.findUnique({
-    where: { id: productId }
-  });
+async function reserveInventory(
+  productId: string,
+  quantity: number,
+  maxRetries = 3
+) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    // 1. Read the current row (no lock held)
+    const item = await prisma.inventory.findUnique({
+      where: { id: productId }
+    });
 
-  // Attempt the update with a version check
-  const result = await prisma.inventory.updateMany({
-    where: { id: productId, version: item.version, stock: { gte: quantity } },
-    data: {
-      stock: { decrement: quantity },
-      version: { increment: 1 }
+    if (!item || item.stock < quantity) {
+      throw new Error('Out of stock');
     }
-  });
 
-  if (result.count === 0) {
-    throw new Error('Conflict — retry');
+    // 2. Attempt the update with a version check
+    const result = await prisma.inventory.updateMany({
+      where: {
+        id: productId,
+        version: item.version,       // <-- optimistic lock
+        stock: { gte: quantity },
+      },
+      data: {
+        stock: { decrement: quantity },
+        version: { increment: 1 },
+      },
+    });
+
+    // 3. If zero rows matched, version changed — retry
+    if (result.count > 0) return;
+
+    if (attempt === maxRetries) {
+      throw new Error('Max retries exceeded — try again later');
+    }
+
+    console.log(`Conflict on ${productId}, retry ${attempt}/${maxRetries}`);
   }
+}
+```
+
+`prisma.updateMany` with a `where` clause that includes the version returns `{ count: 0 }` when no row matches. For single-record updates, `prisma.update` throws `PrismaClientKnownRequestError` with code `P2025` ("Record to update not found") instead — catch it and retry:
+
+```typescript
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client.js';
+
+try {
+  await prisma.inventory.update({
+    where: { id: productId, version: expectedVersion },
+    data: { stock: { decrement: quantity }, version: { increment: 1 } },
+  });
+} catch (err) {
+  if (err instanceof PrismaClientKnownRequestError && err.code === 'P2025') {
+    // Version mismatch — another request already changed the row
+    return await reserveInventory(productId, quantity);
+  }
+  throw err;
 }
 ```
 
@@ -287,13 +326,101 @@ await prisma.$transaction(async (tx) => {
 });
 ```
 
+**Queue claiming** is a common pattern where multiple workers poll for the next job. `FOR UPDATE SKIP LOCKED` prevents workers from fighting over the same row:
+
+```typescript
+// Worker claims the next unprocessed message
+async function claimNextMessage(tx: Prisma.TransactionClient):
+  Promise<OutboxMessage | null> {
+  const rows = await tx.$queryRawUnsafe<OutboxMessage[]>(
+    `SELECT * FROM outbox_messages
+     WHERE status = 'pending'
+     ORDER BY created_at ASC
+     LIMIT 1
+     FOR UPDATE SKIP LOCKED`
+  );
+  return rows[0] ?? null;
+}
+
+// Polling loop
+setInterval(async () => {
+  await prisma.$transaction(async (tx) => {
+    const msg = await claimNextMessage(tx);
+    if (!msg) return;
+    await tx.outboxMessage.update({
+      where: { id: msg.id },
+      data: { status: 'processing' }
+    });
+    // process msg...
+  });
+}, 1000);
+```
+
+Without `SKIP LOCKED`, multiple workers that poll simultaneously all block on the same unprocessed row, creating a thundering-herd problem. With `SKIP LOCKED`, each worker gets a different row (or `null` if none are available), and they never wait on each other.
+
 **Do NOT use `SELECT FOR UPDATE` when:**
 
 - The operation can be expressed as a single atomic `UPDATE` statement (e.g. `UPDATE inventory SET stock = stock - 1 WHERE stock >= 1`)
 - Conflicts are rare — optimistic locking is simpler and has lower overhead
 - The transaction would hold the lock for a long time (network calls, user input) — locks should span milliseconds, not seconds
 - You only need to read data — read-only queries never need `FOR UPDATE`
-| **Optimistic Locking** | Low-contention writes with occasional conflicts — profile updates, CMS content edits, non-critical inventory |
+
+### PostgreSQL Advisory Locks from Prisma
+
+PostgreSQL offers application-defined **advisory locks** — lightweight mutexes identified by a 64-bit integer or two 32-bit integers. Unlike row-level locks, advisory locks are not tied to any table row. Use them for cross-instance coordination where no natural row exists to lock.
+
+```typescript
+// Session-level advisory lock (released on connection close or explicit unlock)
+await prisma.$executeRawUnsafe(
+  "SELECT pg_advisory_lock(hashtext($1))",
+  'db-migration-lock'
+);
+
+try {
+  // critical section — only one instance at a time
+  await runMigration();
+} finally {
+  // Release lock so other instances can proceed
+  await prisma.$executeRawUnsafe(
+    "SELECT pg_advisory_unlock(hashtext($1))",
+    'db-migration-lock'
+  );
+}
+```
+
+**Try-advisory-lock** (non-blocking variant) returns `true`/`false` instead of blocking:
+
+```typescript
+const locked: Array<{ locked: boolean }> = await prisma.$queryRawUnsafe(
+  'SELECT pg_try_advisory_lock(hashtext($1)) AS locked',
+  'job-scheduler-lock'
+);
+
+if (locked[0].locked) {
+  try {
+    await scheduleJobs();
+  } finally {
+    await prisma.$executeRawUnsafe(
+      'SELECT pg_advisory_unlock(hashtext($1))',
+      'job-scheduler-lock'
+    );
+  }
+} else {
+  console.log('Another instance already holds the lock — skipping');
+}
+```
+
+**When to use advisory locks:**
+- **Distributed cron / job scheduling** — ensure only one instance runs a periodic job
+- **Schema migrations** — prevent concurrent migrations in multi-instance deployments
+- **Cache warming** — coordinate cache rebuilds without duplicate work
+- **Non-table resources** — lock a logical resource (e.g. "user-import-process") without creating a row
+
+**When NOT to use advisory locks:**
+
+- **Row-level protection** — use `SELECT FOR UPDATE` instead; advisory locks have no relationship to table rows
+- **Long-held locks** — advisory locks held across connection pool churn can leak (session-level locks survive until the connection closes or you explicitly unlock)
+- **Portability** — advisory locks are a PostgreSQL-only feature
 
 ---
 
@@ -303,6 +430,18 @@ await prisma.$transaction(async (tx) => {
 - **Atomic Operations** — not suitable for multi-step business logic that requires validation before write.
 - **Pessimistic Locking** — avoid in read-heavy workloads or when conflicts are rare; avoid when deadlock management is infeasible.
 - **Optimistic Locking** — avoid when contention is high (retry overhead hurts throughput); avoid when you cannot tolerate any failed writes.
+
+---
+
+## Strategy Decision Table
+
+| Pattern | How to Implement in Prisma | Best For | Worst For |
+|---------|---------------------------|----------|-----------|
+| **Atomic Operation** | `prisma.update({ where, data: { field: { increment/decrement } } })` with `where` guard | Single-field mutations (stock, counter) | Multi-step business logic |
+| **Optimistic Locking** | `updateMany` with `version` in `where` + retry loop (or `update` + catch `P2025`) | Low-contention CRUD, profile edits | Hot rows, high write volume |
+| **Pessimistic Locking** | `$queryRawUnsafe('SELECT ... FOR UPDATE')` inside `$transaction` | High-contention reservation (flash sales, booking) | Read-heavy workloads, long-held locks |
+| **Queue Claiming** | `$queryRawUnsafe('SELECT ... FOR UPDATE SKIP LOCKED')` inside `$transaction` | Multi-worker job polling (outbox, task queue) | FIFO ordering (SKIP LOCKED skips locked rows regardless of order) |
+| **Advisory Lock** | `$executeRawUnsafe('SELECT pg_advisory_lock(...)')` with try/finally unlock | Cross-instance coordination, cron scheduling | Row-level data protection, portable code |
 
 ---
 
