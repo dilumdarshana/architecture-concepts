@@ -73,6 +73,7 @@ Each architectural pattern maps to a specific problem area:
 | [Consensus Algorithms](consensus-algorithms.md) | etcd or Raft-based coordination for failover and config management |
 | [Consistency Models](consistency-models.md) | Order Service uses strong consistency for inventory; eventual consistency for notifications |
 | [Consistent Hashing](consistent-hashing.md) | Redis Cluster uses consistent hashing for cache key distribution |
+| [Distributed Cache](distributed-cache.md) | Redis Cluster partitions the product catalog cache across nodes and replicates it for availability |
 | [Event Sourcing](event-sourcing.md) | Payment Service stores ledger as an append-only event stream |
 | [Service Discovery](service-discovery.md) | Kubernetes DNS resolves service names to healthy pod IPs |
 | [Backpressure](backpressure.md) | Queue workers limit concurrency; streams use backpressure-aware piping |
@@ -286,6 +287,7 @@ async function chargeCustomer(
 | ORM | Prisma |
 | Database | PostgreSQL (per service) |
 | Message Queue | BullMQ (Redis) |
+| Cache | Redis Cluster (distributed cache) |
 | Event Broker | Amazon SNS / SQS |
 | API Gateway | Express Gateway or Kong |
 | Tracing | OpenTelemetry |

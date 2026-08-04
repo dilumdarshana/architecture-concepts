@@ -69,6 +69,7 @@ A library of architectural patterns and design concepts for building distributed
 | [Database Concurrency Control](database-concurrency-control.md) | Transactions, atomic operations, optimistic and pessimistic locking for safe concurrent data access. |
 | [Database Migrations](database-migrations.md) | Zero-downtime schema changes using expand-migrate-contract pattern. |
 | [Caching Strategies](caching-strategies.md) | Cache-aside, write-through, write-behind, multi-level caching, invalidation, and stampede prevention. |
+| [Distributed Cache](distributed-cache.md) | A cache spread across multiple nodes — partitioning, replication, failover, and the consistency trade-offs of caching at scale. |
 | [Consistent Hashing](consistent-hashing.md) | Ring-based hashing that minimises key remapping when nodes join or leave. |
 | [Replication](replication.md) | Single-leader, multi-leader, and synchronous/asynchronous replication strategies. |
 | [Sharding](sharding.md) | Horizontal partitioning of data across independent databases for scale. |

@@ -77,7 +77,8 @@ The data layer is the backbone of the system. Understand how to keep it correct 
 | 14 | [Replication](replication.md) | Single-leader (writes to one node, reads from replicas), multi-leader (writes anywhere, conflict resolution), synchronous vs async | PostgreSQL streaming replication for HA; read replicas serve analytics queries without impacting the primary |
 | 15 | [Sharding](sharding.md) | Horizontal partitioning by shard key (customer_id, region). Range, hash, and consistent hash strategies. Cross-shard queries are expensive | Order data sharded by `customer_id` so each shard stays small and writes scale horizontally |
 | 16 | [Consistent Hashing](consistent-hashing.md) | Ring-based hashing, virtual nodes, minimal key remapping on node changes | Redis Cluster uses consistent hashing for cache key distribution — adding a cache node moves only ~1/N of keys |
-| 17 | [Database Migrations](database-migrations.md) | Expand-migrate-contract for zero-downtime schema changes; backward-compatible migrations; rollback strategies | Every service applies expand-migrate-contract for schema changes — adding a NOT NULL column backfills before adding the constraint |
+| 17 | [Distributed Cache](distributed-cache.md) | Partitioning, replication, failover, hot keys, cache stampede on node loss, AP consistency trade-offs | Redis Cluster partitions the product catalog cache across nodes and replicates it for availability |
+| 18 | [Database Migrations](database-migrations.md) | Expand-migrate-contract for zero-downtime schema changes; backward-compatible migrations; rollback strategies | Every service applies expand-migrate-contract for schema changes — adding a NOT NULL column backfills before adding the constraint |
 
 ### Interview Checkpoint — Phase 4
 
@@ -91,11 +92,11 @@ The heart of the system — how services communicate asynchronously.
 
 | Step | Doc | Interview Weakness Addressed | Key Talking Points | Practical Project Connection |
 |------|-----|------------------------------|-------------------|------------------------------|
-| 18 | [Event-Driven Architecture](event-driven-architecture.md) | Basic familiarity but lacked depth | Event production, event channels (message broker), event consumption. Loose coupling, scalability, eventual consistency | All services communicate through Bull/Redis message queue. Order Service publishes events; Notification and Analytics services consume them |
-| 19 | [Outbox Pattern](outbox-pattern.md) | Knew the name but surface-level | Dual-write problem (write DB + publish event in one transaction), outbox table, poller/publisher, at-least-once delivery | Order Service publishes `OrderCreated`/`PaymentConfirmed` without dual-write risk — writes event to outbox table in same Prisma `$transaction`, then a poller publishes to BullMQ |
-| 20 | [Event Sourcing](event-sourcing.md) | Not mentioned | Append-only event store as source of truth, replayable projections, audit trail, event versioning | Payment Service stores ledger as an append-only event stream — every charge, refund, and reversal is an event |
-| 21 | [CQRS](cqrs.md) | Not mentioned | Separate read and write models. Commands go to the write model (optimised for writes), queries go to the read model (denormalised for fast reads) | Analytics Service maintains denormalised read models built from the event stream — one query, no joins |
-| 22 | [Event Versioning](event-versioning.md) | Could not articulate backward/forward compatibility for schema evolution | Backward compatible (new reads old), forward compatible (old reads new), upcast function, schema registry, new event type vs new version | All services version event schemas for backward compatibility; upcast functions transform old events to latest schema before processing |
+| 19 | [Event-Driven Architecture](event-driven-architecture.md) | Basic familiarity but lacked depth | Event production, event channels (message broker), event consumption. Loose coupling, scalability, eventual consistency | All services communicate through Bull/Redis message queue. Order Service publishes events; Notification and Analytics services consume them |
+| 20 | [Outbox Pattern](outbox-pattern.md) | Knew the name but surface-level | Dual-write problem (write DB + publish event in one transaction), outbox table, poller/publisher, at-least-once delivery | Order Service publishes `OrderCreated`/`PaymentConfirmed` without dual-write risk — writes event to outbox table in same Prisma `$transaction`, then a poller publishes to BullMQ |
+| 21 | [Event Sourcing](event-sourcing.md) | Not mentioned | Append-only event store as source of truth, replayable projections, audit trail, event versioning | Payment Service stores ledger as an append-only event stream — every charge, refund, and reversal is an event |
+| 22 | [CQRS](cqrs.md) | Not mentioned | Separate read and write models. Commands go to the write model (optimised for writes), queries go to the read model (denormalised for fast reads) | Analytics Service maintains denormalised read models built from the event stream — one query, no joins |
+| 23 | [Event Versioning](event-versioning.md) | Could not articulate backward/forward compatibility for schema evolution | Backward compatible (new reads old), forward compatible (old reads new), upcast function, schema registry, new event type vs new version | All services version event schemas for backward compatibility; upcast functions transform old events to latest schema before processing |
 
 ### Interview Checkpoint — Phase 5
 
@@ -109,14 +110,14 @@ How the system survives failures without cascading.
 
 | Step | Doc | Interview Weakness Addressed | Key Talking Points | Practical Project Connection |
 |------|-----|------------------------------|-------------------|------------------------------|
-| 23 | [Idempotency](idempotency.md) | Described SQS alone, not the idempotency store | Idempotency key (client UUID), idempotency table (key + result), deduplication flow, email send-log pattern | Payment Service deduplicates charge requests on retry — checks idempotency key before calling Stripe |
-| 24 | [Retry Pattern](retry-pattern.md) | Not mentioned | Exponential backoff (delay = base * 2^n), jitter (full/equal/decorrelated), max retries, dead letter queue | BullMQ workers use exponential backoff + jitter for payment and notification jobs |
-| 25 | [Circuit Breaker](circuit-breaker.md) | Not mentioned | States: closed (normal) → open (failing fast) → half-open (probbing). Error threshold, timeout window, fallback | Order Service wraps downstream Payment API calls with opossum — when Payment is degraded, it fails fast |
-| 26 | [Rate Limiting](rate-limiting.md) | Not mentioned | Token bucket, sliding window, fixed window. 429 + Retry-After header | API Gateway enforces per-client rate limits with token bucket |
-| 27 | [Bulkhead Pattern](bulkhead-pattern.md) | Not mentioned | Isolate connection pools per dependency. One slow service cannot exhaust shared resources | Each service has dedicated connection pools per downstream dependency |
-| 28 | [Backpressure](backpressure.md) | Not mentioned | Producer must not outpace consumer. Bounded queues, stream `drain` events, user credits | Queue workers limit concurrency; streams use backpressure-aware piping |
-| 29 | [Distributed Lock](distributed-lock.md) | Not mentioned | Mutual exclusion via Redis SET NX with TTL. try/finally release, lease renewal | Coordination across service instances for singleton jobs |
-| 30 | [Claim-Check Pattern](claim-check-pattern.md) | Not mentioned | `SELECT ... FOR UPDATE SKIP LOCKED` for exactly-once consumer processing | Inventory Service uses `SELECT FOR UPDATE SKIP LOCKED` on reservation rows to prevent concurrent overselling |
+| 24 | [Idempotency](idempotency.md) | Described SQS alone, not the idempotency store | Idempotency key (client UUID), idempotency table (key + result), deduplication flow, email send-log pattern | Payment Service deduplicates charge requests on retry — checks idempotency key before calling Stripe |
+| 25 | [Retry Pattern](retry-pattern.md) | Not mentioned | Exponential backoff (delay = base * 2^n), jitter (full/equal/decorrelated), max retries, dead letter queue | BullMQ workers use exponential backoff + jitter for payment and notification jobs |
+| 26 | [Circuit Breaker](circuit-breaker.md) | Not mentioned | States: closed (normal) → open (failing fast) → half-open (probbing). Error threshold, timeout window, fallback | Order Service wraps downstream Payment API calls with opossum — when Payment is degraded, it fails fast |
+| 27 | [Rate Limiting](rate-limiting.md) | Not mentioned | Token bucket, sliding window, fixed window. 429 + Retry-After header | API Gateway enforces per-client rate limits with token bucket |
+| 28 | [Bulkhead Pattern](bulkhead-pattern.md) | Not mentioned | Isolate connection pools per dependency. One slow service cannot exhaust shared resources | Each service has dedicated connection pools per downstream dependency |
+| 29 | [Backpressure](backpressure.md) | Not mentioned | Producer must not outpace consumer. Bounded queues, stream `drain` events, user credits | Queue workers limit concurrency; streams use backpressure-aware piping |
+| 30 | [Distributed Lock](distributed-lock.md) | Not mentioned | Mutual exclusion via Redis SET NX with TTL. try/finally release, lease renewal | Coordination across service instances for singleton jobs |
+| 31 | [Claim-Check Pattern](claim-check-pattern.md) | Not mentioned | `SELECT ... FOR UPDATE SKIP LOCKED` for exactly-once consumer processing | Inventory Service uses `SELECT FOR UPDATE SKIP LOCKED` on reservation rows to prevent concurrent overselling |
 
 ### Interview Checkpoint — Phase 6
 
@@ -130,11 +131,11 @@ Run the system in production.
 
 | Step | Doc | Key Talking Points | Practical Project Connection |
 |------|-----|-------------------|------------------------------|
-| 31 | [Service Discovery](service-discovery.md) | Client-side (Consul) vs server-side (Kubernetes DNS + kube-proxy). Health checks determine discoverability | Kubernetes DNS resolves service names to healthy pod IPs; readiness probes control traffic routing |
-| 32 | [Leader Election](leader-election.md) | Lease-based (Redis SET NX + TTL) vs consensus-based (Raft). Split-brain risk with leases | Singleton batch job coordinator — report generation, cache warming |
-| 33 | [Distributed Tracing](distributed-tracing.md) | OpenTelemetry, trace ID propagation, spans, parent-child relationships | Every request traced across all services, correlated by trace ID |
-| 34 | [API Versioning](api-versioning.md) | Vague on API versioning mechanics | URL prefix vs header vs query parameter; separate Express routers per version; shared services between versions; deprecation headers and sunset timeline | API Gateway mounts `/api/v1` and `/api/v2` routers; deprecated versions get `Sunset` headers with a clear migration deadline |
-| 35 | [Rollout Strategies](rollout-strategies.md) | Lacked concrete rollout mechanics | Feature flags, percentage rollout with deterministic bucketing, canary releases, allowlists, A/B testing; flag lifecycle from config to removal | Feature flags control gradual rollout of the new checkout flow; percentage routing for canary deployments |
+| 32 | [Service Discovery](service-discovery.md) | Client-side (Consul) vs server-side (Kubernetes DNS + kube-proxy). Health checks determine discoverability | Kubernetes DNS resolves service names to healthy pod IPs; readiness probes control traffic routing |
+| 33 | [Leader Election](leader-election.md) | Lease-based (Redis SET NX + TTL) vs consensus-based (Raft). Split-brain risk with leases | Singleton batch job coordinator — report generation, cache warming |
+| 34 | [Distributed Tracing](distributed-tracing.md) | OpenTelemetry, trace ID propagation, spans, parent-child relationships | Every request traced across all services, correlated by trace ID |
+| 35 | [API Versioning](api-versioning.md) | Vague on API versioning mechanics | URL prefix vs header vs query parameter; separate Express routers per version; shared services between versions; deprecation headers and sunset timeline | API Gateway mounts `/api/v1` and `/api/v2` routers; deprecated versions get `Sunset` headers with a clear migration deadline |
+| 36 | [Rollout Strategies](rollout-strategies.md) | Lacked concrete rollout mechanics | Feature flags, percentage rollout with deterministic bucketing, canary releases, allowlists, A/B testing; flag lifecycle from config to removal | Feature flags control gradual rollout of the new checkout flow; percentage routing for canary deployments |
 
 ### Interview Checkpoint — Phase 7
 
@@ -148,7 +149,7 @@ Run the system in production.
 
 | Step | Doc | Interview Weakness Addressed | Key Talking Points | Practical Project Connection |
 |------|-----|------------------------------|-------------------|------------------------------|
-| 36 | [Testing Event-Driven Systems](testing-event-driven-systems.md) | Could not describe how to test async handlers, idempotency, or projections | Three test layers: unit (mocked event store/bus), integration (real DB + in-memory broker), contract (event shape). In-memory event store for fast handler tests. Testcontainers for real PostgreSQL. Idempotency test — same event twice, side effects once | All handlers are unit-tested with mocked event stores; projections are integration-tested against a testcontainers PostgreSQL; outbox tests verify both business data and event are written atomically |
+| 37 | [Testing Event-Driven Systems](testing-event-driven-systems.md) | Could not describe how to test async handlers, idempotency, or projections | Three test layers: unit (mocked event store/bus), integration (real DB + in-memory broker), contract (event shape). In-memory event store for fast handler tests. Testcontainers for real PostgreSQL. Idempotency test — same event twice, side effects once | All handlers are unit-tested with mocked event stores; projections are integration-tested against a testcontainers PostgreSQL; outbox tests verify both business data and event are written atomically |
 
 ### Interview Checkpoint — Phase 8
 
