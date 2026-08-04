@@ -23,7 +23,7 @@ importers:
         version: 26.1.1
       '@types/pg':
         specifier: ^8.20.0
-        version: 8.20.0
+        version: 8.20.3
       ts-node-dev:
         specifier: ^2.0.0
         version: 2.0.0(@types/node@26.1.1)(typescript@7.0.2)
@@ -77,8 +77,8 @@ packages:
   '@types/node@26.1.1':
     resolution: {integrity: sha512-nxAkRSVkN1Y0JC1W8ky/fTfkGsMmcrRsbx+3XoZE+rMOX71kLYTV7fLXpqud1GpbpP5TuffXFqfX7fH2GgZREw==}
 
-  '@types/pg@8.20.0':
-    resolution: {integrity: sha512-bEPFOaMAHTEP1EzpvHTbmwR8UsFyHSKsRisLIHVMXnpNefSbGA1bD6CVy+qKjGSqmZqNqBDV2azOBo8TgkcVow==}
+  '@types/pg@8.20.3':
+    resolution: {integrity: sha512-4Tvg+HO6+oQaAkpT8GTYoSExzpGGZz532GXgbbCElWJQeQdMozBWxEKNBhJJpHFjWXsMxqPbyypvj/89FWNoSQ==}
 
   '@types/qs@6.15.1':
     resolution: {integrity: sha512-GZHUBZR9hckSUhrxmp1nG6NwdpM9fCunJwyThLW1X3AyHgd9IlHb6VANpQQqDr2o/qQp6McZ3y/IA2rVzKzSbw==}
@@ -792,7 +792,7 @@ snapshots:
     dependencies:
       undici-types: 8.3.0
 
-  '@types/pg@8.20.0':
+  '@types/pg@8.20.3':
     dependencies:
       '@types/node': 26.1.1
       pg-protocol: 1.15.0
