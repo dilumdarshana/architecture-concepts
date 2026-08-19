@@ -108,6 +108,9 @@ Each architectural pattern maps to a specific problem area:
 | [OAuth 2.0](oauth2.md) | API Gateway validates access tokens against Keycloak's JWKS; scopes gate `/api` routes |
 | [OpenID Connect (OIDC)](oidc.md) | Keycloak issues OIDC ID tokens; the gateway verifies identity before role-based authorization |
 | [API Security (OWASP Top 10)](owasp-top-10.md) | All queries parameterised via Prisma (SQL injection); ownership checks prevent IDOR; gateway enforces authN/authZ on every route |
+| [TLS & mTLS](tls-mtls.md) | All external traffic over HTTPS; internal services authenticate via mTLS in the service mesh |
+| [Webhook Security](webhook-security.md) | Payment Service verifies Stripe webhook HMAC signatures before processing payment events |
+| [Secrets Management](secrets-management.md) | All credentials stored in AWS Secrets Manager; injected via env at deploy; rotated on schedule |
 | [Rollout Strategies](rollout-strategies.md) | Feature flags control gradual rollout of new checkout flow; percentage routing for canary deployments |
 | [Database Migrations](database-migrations.md) | Expand-migrate-contract pattern for zero-downtime schema changes across rolling deploys |
 | [Testing Event-Driven Systems](testing-event-driven-systems.md) | In-memory event store for unit tests; integration tests with testcontainers for projections and handlers |
@@ -295,6 +298,8 @@ async function chargeCustomer(
 | Event Broker | Amazon SNS / SQS |
 | API Gateway | Express Gateway or Kong |
 | Auth | Keycloak (OIDC + OAuth 2.0 Authorization Code + PKCE, JWT/JWKS validation) |
+| Transport Security | TLS for external traffic; mTLS between services (service mesh) |
+| Secrets | AWS Secrets Manager (injected via env at deploy, rotated on schedule) |
 | Tracing | OpenTelemetry |
 | Container | Docker / Kubernetes |
 
