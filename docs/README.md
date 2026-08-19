@@ -33,6 +33,8 @@ A library of architectural patterns and design concepts for building distributed
 | [GraphQL](graphql.md) | Client-driven query language that lets clients request exactly the data they need from a single endpoint. |
 | [gRPC](grpc.md) | High-performance RPC using Protocol Buffers and HTTP/2 for typed, streaming inter-service communication. |
 | [API Authentication](api-authentication.md) | API keys, sessions, JWT, OAuth 2.0, OIDC, and SSO — verifying identity and enforcing authorization on HTTP APIs. |
+| [OAuth 2.0](oauth2.md) | Delegated authorization — grant types, scopes, access/refresh tokens, and PKCE for scoped token-based access. |
+| [OpenID Connect (OIDC)](oidc.md) | Identity layer on top of OAuth 2.0 — ID tokens, UserInfo, discovery, and single sign-on. |
 
 ### Event-Driven Architecture
 

@@ -166,8 +166,8 @@ OAuth 2.0 Authorization Code + PKCE (the common flow for SPAs / mobile)
 - [API Versioning](api-versioning.md) — authentication is typically applied across all API versions
 - [Error Handling (Express)](error-handling.md) — 401 (unauthenticated) and 403 (unauthorized) responses flow through centralised error middleware
 - [Distributed Tracing](distributed-tracing.md) — propagate the caller identity in trace context for audited request logs
-- OAuth 2.0
-- OpenID Connect (OIDC)
+- [OAuth 2.0](oauth2.md) — the delegated authorization framework for scoped, token-based access
+- [OpenID Connect (OIDC)](oidc.md) — the identity layer on top of OAuth 2.0 for authentication and SSO
 - SAML
 - JWT
 - JSON Web Keys (JWKS)

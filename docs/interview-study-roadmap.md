@@ -136,7 +136,9 @@ Run the system in production.
 | 34 | [Distributed Tracing](distributed-tracing.md) | OpenTelemetry, trace ID propagation, spans, parent-child relationships | Every request traced across all services, correlated by trace ID |
 | 35 | [API Versioning](api-versioning.md) | Vague on API versioning mechanics | URL prefix vs header vs query parameter; separate Express routers per version; shared services between versions; deprecation headers and sunset timeline | API Gateway mounts `/api/v1` and `/api/v2` routers; deprecated versions get `Sunset` headers with a clear migration deadline |
 | 36 | [API Authentication](api-authentication.md) | Could not explain token lifecycle or OAuth flows | API keys, sessions vs stateless JWT (revocation), access/refresh tokens, OAuth 2.0 authorization code + PKCE, OIDC, SSO; 401 vs 403 | API Gateway validates bearer tokens and enforces role-based authorization on all `/api` routes |
-| 37 | [Rollout Strategies](rollout-strategies.md) | Lacked concrete rollout mechanics | Feature flags, percentage rollout with deterministic bucketing, canary releases, allowlists, A/B testing; flag lifecycle from config to removal | Feature flags control gradual rollout of the new checkout flow; percentage routing for canary deployments |
+| 37 | [OAuth 2.0](oauth2.md) | Could not distinguish grant types | Authorization Code + PKCE (SPAs/mobile), Client Credentials (server-to-server), scopes, access vs refresh tokens, JWKS validation | API Gateway validates OAuth access tokens against the IdP's JWKS; scopes gate `/api` routes |
+| 38 | [OpenID Connect (OIDC)](oidc.md) | Could not explain ID token vs access token | ID token (identity, signed JWT), UserInfo endpoint, discovery, `nonce`, single sign-on | Keycloak issues OIDC ID tokens; the gateway verifies identity before authorization |
+| 39 | [Rollout Strategies](rollout-strategies.md) | Lacked concrete rollout mechanics | Feature flags, percentage rollout with deterministic bucketing, canary releases, allowlists, A/B testing; flag lifecycle from config to removal | Feature flags control gradual rollout of the new checkout flow; percentage routing for canary deployments |
 
 ### Interview Checkpoint — Phase 7
 
@@ -150,7 +152,7 @@ Run the system in production.
 
 | Step | Doc | Interview Weakness Addressed | Key Talking Points | Practical Project Connection |
 |------|-----|------------------------------|-------------------|------------------------------|
-| 38 | [Testing Event-Driven Systems](testing-event-driven-systems.md) | Could not describe how to test async handlers, idempotency, or projections | Three test layers: unit (mocked event store/bus), integration (real DB + in-memory broker), contract (event shape). In-memory event store for fast handler tests. Testcontainers for real PostgreSQL. Idempotency test — same event twice, side effects once | All handlers are unit-tested with mocked event stores; projections are integration-tested against a testcontainers PostgreSQL; outbox tests verify both business data and event are written atomically |
+| 40 | [Testing Event-Driven Systems](testing-event-driven-systems.md) | Could not describe how to test async handlers, idempotency, or projections | Three test layers: unit (mocked event store/bus), integration (real DB + in-memory broker), contract (event shape). In-memory event store for fast handler tests. Testcontainers for real PostgreSQL. Idempotency test — same event twice, side effects once | All handlers are unit-tested with mocked event stores; projections are integration-tested against a testcontainers PostgreSQL; outbox tests verify both business data and event are written atomically |
 
 ### Interview Checkpoint — Phase 8
 
