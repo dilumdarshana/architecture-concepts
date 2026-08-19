@@ -32,6 +32,7 @@ A library of architectural patterns and design concepts for building distributed
 | [REST](rest.md) | Resource-oriented API style using standard HTTP methods, status codes, and stateless operations. |
 | [GraphQL](graphql.md) | Client-driven query language that lets clients request exactly the data they need from a single endpoint. |
 | [gRPC](grpc.md) | High-performance RPC using Protocol Buffers and HTTP/2 for typed, streaming inter-service communication. |
+| [API Authentication](api-authentication.md) | API keys, sessions, JWT, OAuth 2.0, OIDC, and SSO — verifying identity and enforcing authorization on HTTP APIs. |
 
 ### Event-Driven Architecture
 
