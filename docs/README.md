@@ -35,6 +35,7 @@ A library of architectural patterns and design concepts for building distributed
 | [API Authentication](api-authentication.md) | API keys, sessions, JWT, OAuth 2.0, OIDC, and SSO — verifying identity and enforcing authorization on HTTP APIs. |
 | [OAuth 2.0](oauth2.md) | Delegated authorization — grant types, scopes, access/refresh tokens, and PKCE for scoped token-based access. |
 | [OpenID Connect (OIDC)](oidc.md) | Identity layer on top of OAuth 2.0 — ID tokens, UserInfo, discovery, and single sign-on. |
+| [API Security (OWASP Top 10)](owasp-top-10.md) | Injection, broken authentication, and access-control flaws — and how to defend API-driven applications against them. |
 
 ### Event-Driven Architecture
 

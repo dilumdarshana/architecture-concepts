@@ -138,7 +138,8 @@ Run the system in production.
 | 36 | [API Authentication](api-authentication.md) | Could not explain token lifecycle or OAuth flows | API keys, sessions vs stateless JWT (revocation), access/refresh tokens, OAuth 2.0 authorization code + PKCE, OIDC, SSO; 401 vs 403 | API Gateway validates bearer tokens and enforces role-based authorization on all `/api` routes |
 | 37 | [OAuth 2.0](oauth2.md) | Could not distinguish grant types | Authorization Code + PKCE (SPAs/mobile), Client Credentials (server-to-server), scopes, access vs refresh tokens, JWKS validation | API Gateway validates OAuth access tokens against the IdP's JWKS; scopes gate `/api` routes |
 | 38 | [OpenID Connect (OIDC)](oidc.md) | Could not explain ID token vs access token | ID token (identity, signed JWT), UserInfo endpoint, discovery, `nonce`, single sign-on | Keycloak issues OIDC ID tokens; the gateway verifies identity before authorization |
-| 39 | [Rollout Strategies](rollout-strategies.md) | Lacked concrete rollout mechanics | Feature flags, percentage rollout with deterministic bucketing, canary releases, allowlists, A/B testing; flag lifecycle from config to removal | Feature flags control gradual rollout of the new checkout flow; percentage routing for canary deployments |
+| 39 | [API Security (OWASP Top 10)](owasp-top-10.md) | Could not name common API vulnerabilities | Injection (parameterised queries), broken authN/authZ (IDOR), SSRF, misconfiguration, defence in depth | API Gateway authenticates and authorises every route; all queries parameterised via Prisma; ownership checks prevent IDOR |
+| 40 | [Rollout Strategies](rollout-strategies.md) | Lacked concrete rollout mechanics | Feature flags, percentage rollout with deterministic bucketing, canary releases, allowlists, A/B testing; flag lifecycle from config to removal | Feature flags control gradual rollout of the new checkout flow; percentage routing for canary deployments |
 
 ### Interview Checkpoint — Phase 7
 
@@ -152,7 +153,7 @@ Run the system in production.
 
 | Step | Doc | Interview Weakness Addressed | Key Talking Points | Practical Project Connection |
 |------|-----|------------------------------|-------------------|------------------------------|
-| 40 | [Testing Event-Driven Systems](testing-event-driven-systems.md) | Could not describe how to test async handlers, idempotency, or projections | Three test layers: unit (mocked event store/bus), integration (real DB + in-memory broker), contract (event shape). In-memory event store for fast handler tests. Testcontainers for real PostgreSQL. Idempotency test — same event twice, side effects once | All handlers are unit-tested with mocked event stores; projections are integration-tested against a testcontainers PostgreSQL; outbox tests verify both business data and event are written atomically |
+| 41 | [Testing Event-Driven Systems](testing-event-driven-systems.md) | Could not describe how to test async handlers, idempotency, or projections | Three test layers: unit (mocked event store/bus), integration (real DB + in-memory broker), contract (event shape). In-memory event store for fast handler tests. Testcontainers for real PostgreSQL. Idempotency test — same event twice, side effects once | All handlers are unit-tested with mocked event stores; projections are integration-tested against a testcontainers PostgreSQL; outbox tests verify both business data and event are written atomically |
 
 ### Interview Checkpoint — Phase 8
 

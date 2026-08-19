@@ -107,6 +107,7 @@ Each architectural pattern maps to a specific problem area:
 | [API Authentication](api-authentication.md) | API Gateway validates OIDC bearer tokens (OAuth 2.0 Authorization Code + PKCE) and enforces role-based authorization on all `/api` routes |
 | [OAuth 2.0](oauth2.md) | API Gateway validates access tokens against Keycloak's JWKS; scopes gate `/api` routes |
 | [OpenID Connect (OIDC)](oidc.md) | Keycloak issues OIDC ID tokens; the gateway verifies identity before role-based authorization |
+| [API Security (OWASP Top 10)](owasp-top-10.md) | All queries parameterised via Prisma (SQL injection); ownership checks prevent IDOR; gateway enforces authN/authZ on every route |
 | [Rollout Strategies](rollout-strategies.md) | Feature flags control gradual rollout of new checkout flow; percentage routing for canary deployments |
 | [Database Migrations](database-migrations.md) | Expand-migrate-contract pattern for zero-downtime schema changes across rolling deploys |
 | [Testing Event-Driven Systems](testing-event-driven-systems.md) | In-memory event store for unit tests; integration tests with testcontainers for projections and handlers |
