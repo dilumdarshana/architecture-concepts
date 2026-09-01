@@ -91,6 +91,7 @@ Each architectural pattern maps to a specific problem area:
 | [Leader Election](leader-election.md) | Singleton batch job coordinator (report generation, cache warming) |
 | [Replication](replication.md) | PostgreSQL streaming replication for database HA; read replicas for analytics queries |
 | [Sharding](sharding.md) | Order data sharded by customer_id for horizontal write scaling |
+| [Multi-Tenancy](multi-tenancy.md) | Saas tenants isolated via a `tenant_id` column in every table with PostgreSQL RLS as an isolation backstop; large tenants promoted to dedicated databases |
 | [Rate Limiting](rate-limiting.md) | API Gateway enforces per-client rate limits with token bucket |
 | [Database Concurrency Control](database-concurrency-control.md) | Inventory Service uses pessimistic locking during flash sales; all services use transactions for atomic writes |
 | [Promise APIs](promise-apis.md) | Dashboard endpoint uses `Promise.all` for parallel user/order/recommendation queries; Notification Service uses `Promise.allSettled` for batch email dispatch |

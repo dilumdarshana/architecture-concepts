@@ -81,6 +81,7 @@ A library of architectural patterns and design concepts for building distributed
 | [Replication](replication.md) | Single-leader, multi-leader, and synchronous/asynchronous replication strategies. |
 | [Sharding](sharding.md) | Horizontal partitioning of data across independent databases for scale. |
 | [MySQL Scaling](mysql-scaling.md) | Progression from single instance to millions of users — replicas, caching, connection pooling, sharding. |
+| [Multi-Tenancy](multi-tenancy.md) | Serving many customers from one instance — shared schema, pooled, and silo isolation models. |
 
 ### Node.js / JavaScript
 
