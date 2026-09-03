@@ -1,4 +1,9 @@
-// tracing.ts — must be imported BEFORE anything else
+// tracing.ts — MUST be imported before any other module.
+//
+// Same setup as order-service. Each service initializes its own tracer provider
+// and exports spans independently. The trace context is propagated between
+// services via HTTP headers (traceparent), not shared state.
+
 import { NodeTracerProvider, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-node';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';

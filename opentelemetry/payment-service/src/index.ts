@@ -1,3 +1,4 @@
+// Import tracing FIRST — patches http/Express before they're used.
 import './tracing';
 import express from 'express';
 import paymentRoutes from './routes/payments';
