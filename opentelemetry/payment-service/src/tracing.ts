@@ -9,12 +9,17 @@ import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { ExpressInstrumentation } from '@opentelemetry/instrumentation-express';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
+import { resourceFromAttributes } from '@opentelemetry/resources';
+import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
 const exporter = new OTLPTraceExporter({
   url: `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'http://localhost:4318'}/v1/traces`,
 });
 
 const provider = new NodeTracerProvider({
+  resource: resourceFromAttributes({
+    [SemanticResourceAttributes.SERVICE_NAME]: 'payment-service',
+  }),
   spanProcessors: [new SimpleSpanProcessor(exporter)],
 });
 

@@ -12,6 +12,8 @@ import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { ExpressInstrumentation } from '@opentelemetry/instrumentation-express';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
+import { resourceFromAttributes } from '@opentelemetry/resources';
+import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
 // Exporter: sends completed spans to a backend (Jaeger, Tempo, Datadog, etc.)
 // via OTLP over HTTP. The endpoint is configured via environment variable.
@@ -23,6 +25,9 @@ const exporter = new OTLPTraceExporter({
 // SimpleSpanProcessor exports each span immediately (no batching) —
 // good for development. Use BatchSpanProcessor in production.
 const provider = new NodeTracerProvider({
+  resource: resourceFromAttributes({
+    [SemanticResourceAttributes.SERVICE_NAME]: 'order-service',
+  }),
   spanProcessors: [new SimpleSpanProcessor(exporter)],
 });
 

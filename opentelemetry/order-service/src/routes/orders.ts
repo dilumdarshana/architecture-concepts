@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { trace, SpanStatusCode } from '@opentelemetry/api';
+import http from 'node:http';
 
 const router: Router = Router();
 const prisma = new PrismaClient();
@@ -46,17 +47,35 @@ router.post('/', async (req, res) => {
     // The payment-service picks it up and continues the same trace.
     const paymentServiceUrl = process.env.PAYMENT_SERVICE_URL || 'http://localhost:3001';
     const payment = await tracer.startActiveSpan('call-payment-service', async (paySpan) => {
-      const response = await fetch(`${paymentServiceUrl}/payments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId: order.id, amount: 29.99 }),
+      const url = new URL(`${paymentServiceUrl}/payments`);
+      const body = JSON.stringify({ orderId: order.id, amount: 29.99 });
+
+      const data = await new Promise<{ id: string }>((resolve, reject) => {
+        const req = http.request(
+          {
+            hostname: url.hostname,
+            port: url.port,
+            path: url.pathname,
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
+          },
+          (res) => {
+            let data = '';
+            res.on('data', (chunk) => (data += chunk));
+            res.on('end', () => {
+              if (res.statusCode && res.statusCode >= 400) {
+                reject(new Error(`Payment failed: ${res.statusCode}`));
+              } else {
+                resolve(JSON.parse(data));
+              }
+            });
+          },
+        );
+        req.on('error', reject);
+        req.write(body);
+        req.end();
       });
 
-      if (!response.ok) {
-        throw new Error(`Payment failed: ${response.status}`);
-      }
-
-      const data = (await response.json()) as { id: string };
       paySpan.setAttribute('payment.id', data.id);
       paySpan.end();
       return data;
