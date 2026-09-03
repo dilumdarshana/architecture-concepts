@@ -2,19 +2,55 @@
 
 Demonstrates **distributed tracing** with OpenTelemetry across two Express services: an Order Service (with Prisma) calling a Payment Service. Traces are exported to Jaeger for visualisation.
 
+## Architecture
+
 ```
-Client
-  │
-  │  POST /orders
-  ▼
-Order Service (Express + Prisma)          ──►  Jaeger UI (localhost:16686)
-  │
-  │  POST /payments  (traceparent header)
-  ▼
-Payment Service (Express)
-  │
-  ▼
-PostgreSQL
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         Docker Network                                 │
+│                                                                        │
+│  ┌──────────────┐        ┌──────────────────────┐        ┌───────────┐ │
+│  │              │        │                      │        │           │ │
+│  │  PostgreSQL  │◄───────│   Order Service      │        │  Jaeger   │ │
+│  │  :5433       │  Prisma│   Express + Prisma   │        │  UI       │ │
+│  │              │        │   :3000              │        │  :16686   │ │
+│  └──────────────┘        │                      │        │           │ │
+│                          │   tracing.ts ────────│───────►│  OTLP     │ │
+│  ┌──────────────┐        │   (imported first)   │  :4318 │  :4318    │ │
+│  │              │        └──────────┬───────────┘        └───────────┘ │
+│  │  Payment     │                   │                                  │
+│  │  Service     │◄──────────────────┘  POST /payments                  │
+│  │  Express     │                   (traceparent header)              │
+│  │  :3001       │                                                      │
+│  │              │───────► Jaeger via OTLP (same trace)                │
+│  │  tracing.ts ─│───────►                                            │
+│  └──────────────┘                                                      │
+│                                                                        │
+└─────────────────────────────────────────────────────────────────────────┘
+         ▲
+         │
+         │  POST /orders
+         │
+    ┌─────────┐
+    │ Client  │
+    └─────────┘
+```
+
+## Trace Flow
+
+When a client creates an order, the following distributed trace is recorded across both services:
+
+```
+order-service                                          payment-service
+─────────────                                          ───────────────
+POST /orders
+├─ create-order (root span)
+│  ├─ insert-order
+│  │  └─ Prisma: INSERT INTO "Order"
+│  ├─ call-payment-service
+│  │  └─ POST http://payment-service:3001/payments ──────► POST /payments
+│  │     (traceparent header)                              ├─ process-payment
+│  │                                                       │  └─ charge-card
+│  └─ order.status = "paid"                               └─ return { id, status }
 ```
 
 ## Concepts Demonstrated
@@ -22,7 +58,7 @@ PostgreSQL
 - **OTel SDK setup** — `NodeTracerProvider` with OTLP exporter
 - **Auto-instrumentation** — Express and HTTP modules patched automatically
 - **Manual spans** — business logic wrapped with `tracer.startSpan()`
-- **Context propagation** — trace ID flows from Order to Payment via HTTP header
+- **Context propagation** — trace ID flows from Order to Payment via `traceparent` HTTP header
 - **Span attributes** — `order.id`, `payment.amount`, etc. attached to spans
 - **Error recording** — failed operations recorded as span exceptions
 
