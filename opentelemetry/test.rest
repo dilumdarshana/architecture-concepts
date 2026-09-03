@@ -1,0 +1,26 @@
+### Health checks
+GET http://localhost:3000/health
+
+###
+GET http://localhost:3001/health
+
+### Create an order — traces flow: Order Service → Payment Service → Jaeger
+POST http://localhost:3000/orders
+Content-Type: application/json
+
+{
+  "productId": "prod-123",
+  "quantity": 2
+}
+
+### Create another order
+POST http://localhost:3000/orders
+Content-Type: application/json
+
+{
+  "productId": "prod-456",
+  "quantity": 1
+}
+
+### Get order by ID (replace <order-id> with actual ID from create response)
+GET http://localhost:3000/orders/<order-id>

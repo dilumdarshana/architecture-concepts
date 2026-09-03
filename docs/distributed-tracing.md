@@ -44,17 +44,23 @@ OpenTelemetry is the standard for distributed tracing. It auto-instruments commo
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
 import { trace, Span, context, propagation } from '@opentelemetry/api';
-import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
+import { NodeTracerProvider, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-node';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { ExpressInstrumentation } from '@opentelemetry/instrumentation-express';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
+import { registerInstrumentations } from '@opentelemetry/instrumentation';
 
 // Setup (runs once at startup)
-const provider = new NodeTracerProvider();
+// OTLP endpoint: Grafana Tempo, Jaeger, or any OTLP-compatible backend
+const exporter = new OTLPTraceExporter({
+  url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'http://localhost:4318/v1/traces',
+});
+const provider = new NodeTracerProvider({
+  spanProcessors: [new SimpleSpanProcessor(exporter)],
+});
 provider.register();
 
 // Auto-instrument Express and HTTP
-import { registerInstrumentations } from '@opentelemetry/instrumentation';
 registerInstrumentations({
   instrumentations: [
     new ExpressInstrumentation(),
