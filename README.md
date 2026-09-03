@@ -8,6 +8,7 @@
 ## Included
 - CQRS
 - gRPC
+- OpenTelemetry
 
 ## Purpose
 
@@ -50,6 +51,7 @@ Current patterns in the repository:
 | CQRS (Command Query Responsibility Segregation) | [`cqrs/`](cqrs/) | In Progress |
 | gRPC | [`grpc/`](grpc/) | Done |
 | Event Emitter + Express | [`event-emitter/`](event-emitter/) | Done |
+| OpenTelemetry | [`opentelemetry/`](opentelemetry/) | Done |
 | Architecture Concepts (full index) | [`docs/README.md`](docs/README.md) | 37 docs |
 
 > More patterns will be added over time, following the same **isolated, hands-on approach**.
