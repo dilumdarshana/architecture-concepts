@@ -82,6 +82,7 @@ A library of architectural patterns and design concepts for building distributed
 | [Sharding](sharding.md) | Horizontal partitioning of data across independent databases for scale. |
 | [MySQL Scaling](mysql-scaling.md) | Progression from single instance to millions of users — replicas, caching, connection pooling, sharding. |
 | [Multi-Tenancy](multi-tenancy.md) | Serving many customers from one instance — shared schema, pooled, and silo isolation models. |
+| [Row Level Security (RLS)](row-level-security.md) | PostgreSQL row-level access control enforced in the database — the backstop for shared-schema tenant isolation. |
 
 ### Node.js / JavaScript
 

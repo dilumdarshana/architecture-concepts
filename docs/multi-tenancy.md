@@ -121,7 +121,7 @@ Tenant resolution happens once, at the boundary, and is threaded through the req
 1. **Identify the tenant at the boundary.** Derive `tenant_id` from the authenticated principal (JWT/OIDC claim), the subdomain (`acme.saas.com`), or a header — before the request reaches business logic.
 2. **Propagate the tenant into a per-request context.** Store `tenantId` in an `AsyncLocalStorage`-style context (or middleware `res.locals`) so every downstream call reads it, avoiding every function having to carry it explicitly.
 3. **Scope every data access.** All queries and writes include the tenant predicate. Add a composite index `(tenant_id, ...)` to keep per-tenant queries fast.
-4. **Enforce isolation in the database layer.** Use restrictive row-level security (RLS) policies as a backstop: even a code path that forgets `WHERE tenant_id` cannot cross tenant boundaries.
+4. **Enforce isolation in the database layer.** Use restrictive [row-level security (RLS)](row-level-security.md) policies as a backstop: even a code path that forgets `WHERE tenant_id` cannot cross tenant boundaries.
 5. **Route to the right data store.** In pooled models, all tenants share tables; in silo models, resolve the tenant's connection/database from a mapping and use it.
 6. **Isolate across the whole stack.** Not just data — queues, caches, rate limits, and logging should be partitioned per tenant (e.g. cache keys prefixed by `tenantId`, per-tenant priority).
 7. **Test for cross-tenant leaks.** Write a test that tenant A cannot read tenant B's data for every protected resource — constant regression coverage on the security boundary.
@@ -176,6 +176,7 @@ Tenant resolution happens once, at the boundary, and is threaded through the req
 - [Rate Limiting](rate-limiting.md) — per-tenant rate limiting to prevent noisy tenants degrading others
 - [Bulkhead Pattern](bulkhead-pattern.md) — per-tenant connection pools and job queues to bound noisy neighbour impact
 - [Database Concurrency Control](database-concurrency-control.md) — tenant-scoped indexes and locking
+- [Row Level Security (RLS)](row-level-security.md) — the database-layer backstop that enforces tenant isolation even when a `WHERE` clause is forgotten
 - [OWASP Top 10 (IDOR)](owasp-top-10.md) — the inverted/missing access-control flaw that causes cross-tenant leaks
 
 ---
