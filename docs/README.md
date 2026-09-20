@@ -32,6 +32,11 @@ A library of architectural patterns and design concepts for building distributed
 | [REST](rest.md) | Resource-oriented API style using standard HTTP methods, status codes, and stateless operations. |
 | [GraphQL](graphql.md) | Client-driven query language that lets clients request exactly the data they need from a single endpoint. |
 | [gRPC](grpc.md) | High-performance RPC using Protocol Buffers and HTTP/2 for typed, streaming inter-service communication. |
+
+### Security
+
+| Concept | Description |
+|---------|-------------|
 | [API Authentication](api-authentication.md) | API keys, sessions, JWT, OAuth 2.0, OIDC, and SSO — verifying identity and enforcing authorization on HTTP APIs. |
 | [OAuth 2.0](oauth2.md) | Delegated authorization — grant types, scopes, access/refresh tokens, and PKCE for scoped token-based access. |
 | [OpenID Connect (OIDC)](oidc.md) | Identity layer on top of OAuth 2.0 — ID tokens, UserInfo, discovery, and single sign-on. |
@@ -39,6 +44,7 @@ A library of architectural patterns and design concepts for building distributed
 | [TLS & mTLS](tls-mtls.md) | Transport encryption and mutual authentication — HTTPS, certificates, and secure service-to-service communication. |
 | [Webhook Security](webhook-security.md) | Verifying webhook authenticity with HMAC signatures, constant-time comparison, and replay protection. |
 | [Secrets Management](secrets-management.md) | Storing, distributing, and rotating API keys, passwords, and certificates — never in code or logs. |
+| [Row Level Security (RLS)](row-level-security.md) | PostgreSQL row-level access control enforced in the database — the backstop for shared-schema tenant isolation. |
 
 ### Event-Driven Architecture
 
@@ -82,7 +88,6 @@ A library of architectural patterns and design concepts for building distributed
 | [Sharding](sharding.md) | Horizontal partitioning of data across independent databases for scale. |
 | [MySQL Scaling](mysql-scaling.md) | Progression from single instance to millions of users — replicas, caching, connection pooling, sharding. |
 | [Multi-Tenancy](multi-tenancy.md) | Serving many customers from one instance — shared schema, pooled, and silo isolation models. |
-| [Row Level Security (RLS)](row-level-security.md) | PostgreSQL row-level access control enforced in the database — the backstop for shared-schema tenant isolation. |
 
 ### Node.js / JavaScript
 
