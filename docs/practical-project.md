@@ -106,10 +106,12 @@ Each architectural pattern maps to a specific problem area:
 | [Claim-Check Pattern](claim-check-pattern.md) | Inventory Service uses `SELECT ... FOR UPDATE SKIP LOCKED` on reservation rows to prevent concurrent overselling |
 | [Event Versioning](event-versioning.md) | All services version event schemas for backward compatibility; consumers use upcast functions to handle older event versions |
 | [API Versioning](api-versioning.md) | API Gateway mounts versioned Express routers (`/api/v1`, `/api/v2`) with deprecation headers and sunset timelines |
+| [Security Principles](security-principles.md) | Defence in depth applied from the gateway to the database; OAuth scopes and ownership checks enforce least privilege and contain blast radius per tenant |
 | [API Authentication](api-authentication.md) | API Gateway validates OIDC bearer tokens (OAuth 2.0 Authorization Code + PKCE) and enforces role-based authorization on all `/api` routes |
 | [OAuth 2.0](oauth2.md) | API Gateway validates access tokens against Keycloak's JWKS; scopes gate `/api` routes |
 | [OpenID Connect (OIDC)](oidc.md) | Keycloak issues OIDC ID tokens; the gateway verifies identity before role-based authorization |
 | [API Security (OWASP Top 10)](owasp-top-10.md) | All queries parameterised via Prisma (SQL injection); ownership checks prevent IDOR; gateway enforces authN/authZ on every route |
+| [DDoS & DoS Protection](ddos-protection.md) | CloudFront/CDN scrubs volumetric floods; WAF blocks application-layer attacks; gateway rate limits plus Node.js timeouts and connection limits protect the services |
 | [TLS & mTLS](tls-mtls.md) | All external traffic over HTTPS; internal services authenticate via mTLS in the service mesh |
 | [Webhook Security](webhook-security.md) | Payment Service verifies Stripe webhook HMAC signatures before processing payment events |
 | [Secrets Management](secrets-management.md) | All credentials stored in AWS Secrets Manager; injected via env at deploy; rotated on schedule |
@@ -301,6 +303,7 @@ async function chargeCustomer(
 | API Gateway | Express Gateway or Kong |
 | Auth | Keycloak (OIDC + OAuth 2.0 Authorization Code + PKCE, JWT/JWKS validation) |
 | Transport Security | TLS for external traffic; mTLS between services (service mesh) |
+| DDoS Protection | AWS Shield (volumetric) + WAF (application-layer) + CloudFront CDN edge caching |
 | Secrets | AWS Secrets Manager (injected via env at deploy, rotated on schedule) |
 | Tracing | OpenTelemetry |
 | Container | Docker / Kubernetes |
