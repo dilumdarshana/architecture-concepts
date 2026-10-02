@@ -54,7 +54,7 @@ Current patterns in the repository:
 | Event Emitter + Express | [`event-emitter/`](event-emitter/) | Done |
 | OpenTelemetry | [`opentelemetry/`](opentelemetry/) | Done |
 | Outbox + Idempotency + Retry | [`outbox-idempotency-retry/`](outbox-idempotency-retry/) | Done |
-| Architecture Concepts (full index) | [`docs/README.md`](docs/README.md) | 37 docs |
+| Architecture Concepts (full index) | [`docs/README.md`](docs/README.md) | 69 docs |
 
 > More patterns will be added over time, following the same **isolated, hands-on approach**.
 

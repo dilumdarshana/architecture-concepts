@@ -36,6 +36,11 @@ Each service runs on Node.js, which uses [Concurrency vs Parallelism](concurrenc
                            Client
                               │
                               ▼
+                    Load Balancer / ALB
+                   (TLS termination, health
+                    checks, least-connections)
+                              │
+                              ▼
                         API Gateway
                      (Express / Fastify)
                               │
@@ -76,6 +81,7 @@ Each architectural pattern maps to a specific problem area:
 | [Distributed Cache](distributed-cache.md) | Redis Cluster partitions the product catalog cache across nodes and replicates it for availability |
 | [Event Sourcing](event-sourcing.md) | Payment Service stores ledger as an append-only event stream |
 | [Service Discovery](service-discovery.md) | Kubernetes DNS resolves service names to healthy pod IPs |
+| [Load Balancing](load-balancing.md) | ALB terminates TLS and spreads traffic across service targets (least-connections); readiness probes and graceful shutdown drive draining during deploys |
 | [Backpressure](backpressure.md) | Queue workers limit concurrency; streams use backpressure-aware piping |
 | [Bulkhead Pattern](bulkhead-pattern.md) | Each service has dedicated connection pools per downstream dependency |
 | [Circuit Breaker](circuit-breaker.md) | Order Service wraps downstream Payment API calls with opossum |
@@ -301,6 +307,7 @@ async function chargeCustomer(
 | Cache | Redis Cluster (distributed cache) |
 | Event Broker | Amazon SNS / SQS |
 | API Gateway | Express Gateway or Kong |
+| Load Balancer | AWS ALB (L7, least-connections, target group health checks) |
 | Auth | Keycloak (OIDC + OAuth 2.0 Authorization Code + PKCE, JWT/JWKS validation) |
 | Transport Security | TLS for external traffic; mTLS between services (service mesh) |
 | DDoS Protection | AWS Shield (volumetric) + WAF (application-layer) + CloudFront CDN edge caching |

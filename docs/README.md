@@ -110,6 +110,7 @@ A library of architectural patterns and design concepts for building distributed
 | Concept | Description |
 |---------|-------------|
 | [Graceful Shutdown](graceful-shutdown.md) | Handling SIGINT/SIGTERM to drain consumers, close connections, and exit cleanly. |
+| [Load Balancing](load-balancing.md) | How a load balancer behaves — selection algorithms, L4 vs L7, active vs passive health checks, draining, slow start, and retry budgets. |
 | [Distributed Tracing](distributed-tracing.md) | Tracking requests across service boundaries with OpenTelemetry. |
 | [Service Discovery](service-discovery.md) | How services find each other dynamically via registries and DNS. |
 | [Leader Election](leader-election.md) | Selecting one node as coordinator using leases or consensus. |
