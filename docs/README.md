@@ -104,6 +104,7 @@ A library of architectural patterns and design concepts for building distributed
 | [Node.js Runtime Architecture](nodejs-runtime.md) | V8, libuv, C++ bindings, and the core JS library — how they compose to run async JavaScript on the server. |
 | [Node.js Event Emitter](nodejs-event-emitter.md) | The observer pattern at the heart of Node.js — EventEmitter API, listeners, memory management, and built-in usage. |
 | [Node.js Race Conditions](nodejs-race-conditions.md) | Logic-level race conditions caused by async interleaving on the single thread — patterns, prevention, and decision guide. |
+| [Language Server Protocol (LSP)](language-server-protocol.md) | JSON-RPC protocol between editors and language servers — capabilities negotiation, document sync, diagnostics, and Node.js server/client examples. |
 
 ### Operational Patterns
 
